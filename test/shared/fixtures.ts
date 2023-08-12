@@ -5,7 +5,9 @@ import { deployContract } from 'ethereum-waffle'
 import { expandTo18Decimals } from './utilities'
 
 import UniswapV2Factory from '@uniswap/v2-core/build/UniswapV2Factory.json'
+import FewFactory from '../build/FewFactory.json'
 import IUniswapV2Pair from '@uniswap/v2-core/build/IUniswapV2Pair.json'
+import IFewWrappedToken from '../build/IFewWrappedToken.json'
 
 import ERC20 from '../../build/ERC20.json'
 import WETH9 from '../../build/WETH9.json'
@@ -14,6 +16,8 @@ import UniswapV1Factory from '../../build/UniswapV1Factory.json'
 import UniswapV2Router01 from '../../build/UniswapV2Router01.json'
 import UniswapV2Migrator from '../../build/UniswapV2Migrator.json'
 import UniswapV2Router02 from '../../build/UniswapV2Router02.json'
+import FewV1Router from '../../build/FewV1Router.json'
+import FewV1RouterFeeOnTransfer from '../../build/FewV1RouterFeeOnTransfer.json'
 import RouterEventEmitter from '../../build/RouterEventEmitter.json'
 
 const overrides = {
@@ -29,6 +33,9 @@ interface V2Fixture {
   factoryV2: Contract
   router01: Contract
   router02: Contract
+  fewRouter: Contract
+  fewRouterFeeOnTransfer: Contract
+  fwWETH: Contract
   routerEventEmitter: Contract
   router: Contract
   migrator: Contract
@@ -50,10 +57,16 @@ export async function v2Fixture(provider: Web3Provider, [wallet]: Wallet[]): Pro
 
   // deploy V2
   const factoryV2 = await deployContract(wallet, UniswapV2Factory, [wallet.address])
+  const fewFactory = await deployContract(wallet, FewFactory, [wallet.address])
+  await fewFactory.createToken(WETH.address);
+  const fwWETHAddress = await fewFactory.getWrappedToken(WETH.address)
+  const fwWETH = new Contract(fwWETHAddress, JSON.stringify(IFewWrappedToken.abi), provider).connect(wallet)
 
   // deploy routers
   const router01 = await deployContract(wallet, UniswapV2Router01, [factoryV2.address, WETH.address], overrides)
   const router02 = await deployContract(wallet, UniswapV2Router02, [factoryV2.address, WETH.address], overrides)
+  const fewRouter = await deployContract(wallet, FewV1Router, [factoryV2.address, WETH.address, fewFactory.address, fwWETH.address], overrides)
+  const fewRouterFeeOnTransfer = await deployContract(wallet, FewV1RouterFeeOnTransfer, [factoryV2.address, WETH.address, fewFactory.address, fwWETH.address], overrides)
 
   // event emitter for testing
   const routerEventEmitter = await deployContract(wallet, RouterEventEmitter, [])
@@ -90,6 +103,9 @@ export async function v2Fixture(provider: Web3Provider, [wallet]: Wallet[]): Pro
     factoryV2,
     router01,
     router02,
+    fewRouter,
+    fewRouterFeeOnTransfer,
+    fwWETH,
     router: router02, // the default router, 01 had a minor bug
     routerEventEmitter,
     migrator,
