@@ -5,9 +5,9 @@ import { deployContract } from 'ethereum-waffle'
 import { expandTo18Decimals } from './utilities'
 
 import UniswapV2Factory from '@uniswap/v2-core/build/UniswapV2Factory.json'
-import FewFactory from '../build/FewFactory.json'
+import FewFactory from './contractBuild/FewFactory.json'
 import IUniswapV2Pair from '@uniswap/v2-core/build/IUniswapV2Pair.json'
-import IFewWrappedToken from '../build/IFewWrappedToken.json'
+import IFewWrappedToken from './contractBuild/IFewWrappedToken.json'
 
 import ERC20 from '../../build/ERC20.json'
 import WETH9 from '../../build/WETH9.json'
