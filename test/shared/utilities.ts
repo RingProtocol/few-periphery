@@ -1,6 +1,6 @@
 import { Contract } from 'ethers'
 import { Web3Provider } from 'ethers/providers'
-import { BigNumber, bigNumberify, keccak256, defaultAbiCoder, toUtf8Bytes, solidityPack } from 'ethers/utils'
+import { BigNumber, bigNumberify, keccak256, getAddress, defaultAbiCoder, toUtf8Bytes, solidityPack } from 'ethers/utils'
 
 export const MINIMUM_LIQUIDITY = bigNumberify(10).pow(3)
 
@@ -74,4 +74,19 @@ export async function mineBlock(provider: Web3Provider, timestamp: number): Prom
 
 export function encodePrice(reserve0: BigNumber, reserve1: BigNumber) {
   return [reserve1.mul(bigNumberify(2).pow(112)).div(reserve0), reserve0.mul(bigNumberify(2).pow(112)).div(reserve1)]
+}
+
+export function getCreate2Address(
+  factoryAddress: string,
+  token: string,
+  bytecode: string
+): string {
+  const createInputs = [
+    '0xff',
+    factoryAddress,
+    keccak256(solidityPack(['address'], [token])),
+    keccak256(bytecode)
+  ];
+  const sanitizedInputs = `0x${createInputs.map(i => i.slice(2)).join('')}`;
+  return getAddress(`0x${keccak256(sanitizedInputs).slice(-40)}`);
 }
