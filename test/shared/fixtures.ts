@@ -8,6 +8,7 @@ import UniswapV2Factory from '@uniswap/v2-core/build/UniswapV2Factory.json'
 import FewFactory from './contractBuild/FewFactory.json'
 import IUniswapV2Pair from '@uniswap/v2-core/build/IUniswapV2Pair.json'
 import IFewWrappedToken from './contractBuild/IFewWrappedToken.json'
+import FewWrappedToken from './contractBuild/FewWrappedToken.json'
 
 import ERC20 from '../../build/ERC20.json'
 import WETH9 from '../../build/WETH9.json'
@@ -24,13 +25,24 @@ const overrides = {
   gasLimit: 9999999
 }
 
+interface FactoryFixture {
+  fewFactory: Contract
+}
+
+export async function factoryFixture(_: Web3Provider, [wallet]: Wallet[]): Promise<FactoryFixture> {
+  const fewFactory = await deployContract(wallet, FewFactory, [wallet.address], overrides)
+  return { fewFactory }
+}
+
 interface V2Fixture {
   token0: Contract
   token1: Contract
+  token: Contract
   WETH: Contract
   WETHPartner: Contract
   factoryV1: Contract
   factoryV2: Contract
+  fewFactory: Contract
   router01: Contract
   router02: Contract
   fewRouter: Contract
@@ -42,12 +54,18 @@ interface V2Fixture {
   WETHExchangeV1: Contract
   pair: Contract
   WETHPair: Contract
+  wrappedTokenaddress: string
+  fewWrappedToken: Contract
 }
 
 export async function v2Fixture(provider: Web3Provider, [wallet]: Wallet[]): Promise<V2Fixture> {
+  const { fewFactory } = await factoryFixture(provider, [wallet])
+
   // deploy tokens
   const tokenA = await deployContract(wallet, ERC20, [expandTo18Decimals(10000)])
   const tokenB = await deployContract(wallet, ERC20, [expandTo18Decimals(10000)])
+  const token = await deployContract(wallet, ERC20, [expandTo18Decimals(10000)])
+
   const WETH = await deployContract(wallet, WETH9)
   const WETHPartner = await deployContract(wallet, ERC20, [expandTo18Decimals(10000)])
 
@@ -57,7 +75,7 @@ export async function v2Fixture(provider: Web3Provider, [wallet]: Wallet[]): Pro
 
   // deploy V2
   const factoryV2 = await deployContract(wallet, UniswapV2Factory, [wallet.address])
-  const fewFactory = await deployContract(wallet, FewFactory, [wallet.address])
+  // const fewFactory = await deployContract(wallet, FewFactory, [wallet.address])
   await fewFactory.createToken(WETH.address);
   const fwWETHAddress = await fewFactory.getWrappedToken(WETH.address)
   const fwWETH = new Contract(fwWETHAddress, JSON.stringify(IFewWrappedToken.abi), provider).connect(wallet)
@@ -94,13 +112,25 @@ export async function v2Fixture(provider: Web3Provider, [wallet]: Wallet[]): Pro
   const WETHPairAddress = await factoryV2.getPair(WETH.address, WETHPartner.address)
   const WETHPair = new Contract(WETHPairAddress, JSON.stringify(IUniswapV2Pair.abi), provider).connect(wallet)
 
+  const tx = await fewFactory.createToken(token.address);
+  const receipt = await tx.wait()
+  const wrappedTokenaddress = receipt.events[0].args.wrappedToken
+  // console.log(receipt.events[0].args.wrappedToken, 'receipt')
+  console.log(wrappedTokenaddress, token.address, 'wrappedTokenaddress, token.address')
+  const address = await fewFactory.getWrappedToken(token.address)
+  console.log(address, 'address')
+  const fewWrappedToken = new Contract(wrappedTokenaddress, JSON.stringify(FewWrappedToken.abi), provider).connect(wallet)
+  // const originalTokenFromContract = await fewWrappedToken.getWrappedToken;
+  // console.log("Original Token from WrappedToken contract: ", originalTokenFromContract);
   return {
     token0,
     token1,
+    token,
     WETH,
     WETHPartner,
     factoryV1,
     factoryV2,
+    fewFactory,
     router01,
     router02,
     fewRouter,
@@ -111,6 +141,8 @@ export async function v2Fixture(provider: Web3Provider, [wallet]: Wallet[]): Pro
     migrator,
     WETHExchangeV1,
     pair,
-    WETHPair
+    WETHPair,
+    wrappedTokenaddress,
+    fewWrappedToken
   }
 }
