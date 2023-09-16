@@ -1,4 +1,4 @@
-import { Contract } from 'ethers'
+import { Contract, utils } from 'ethers'
 import { Web3Provider } from 'ethers/providers'
 import { BigNumber, bigNumberify, keccak256, getAddress, defaultAbiCoder, toUtf8Bytes, solidityPack } from 'ethers/utils'
 
@@ -12,7 +12,7 @@ export function expandTo18Decimals(n: number): BigNumber {
   return bigNumberify(n).mul(bigNumberify(10).pow(18))
 }
 
-function getDomainSeparator(name: string, tokenAddress: string) {
+export function getDomainSeparator(name: string, tokenAddress: string) {
   return keccak256(
     defaultAbiCoder.encode(
       ['bytes32', 'bytes32', 'bytes32', 'uint256', 'address'],
@@ -57,6 +57,37 @@ export async function getApprovalDigest(
   )
 }
 
+export async function getFewWrappedTokenApprovalDigest(
+  token: Contract,
+  name: string,
+  approve: {
+    owner: string
+    spender: string
+    value: BigNumber
+  },
+  nonce: BigNumber,
+  deadline: BigNumber
+): Promise<string> {
+  // const name = await token.name()
+  const DOMAIN_SEPARATOR = getDomainSeparator(name, token.address)
+  return keccak256(
+    solidityPack(
+      ['bytes1', 'bytes1', 'bytes32', 'bytes32'],
+      [
+        '0x19',
+        '0x01',
+        DOMAIN_SEPARATOR,
+        keccak256(
+          defaultAbiCoder.encode(
+            ['bytes32', 'address', 'address', 'uint256', 'uint256', 'uint256'],
+            [PERMIT_TYPEHASH, approve.owner, approve.spender, approve.value, nonce, deadline]
+          )
+        )
+      ]
+    )
+  )
+}
+
 export async function mineBlock(provider: Web3Provider, timestamp: number): Promise<void> {
   await new Promise(async (resolve, reject) => {
     ;(provider._web3Provider.sendAsync as any)(
@@ -81,12 +112,18 @@ export function getCreate2Address(
   token: string,
   bytecode: string
 ): string {
-  const createInputs = [
+  const constructorArgumentsEncoded = utils.defaultAbiCoder.encode(
+    ['address'],
+    [token]
+  )
+  const create2Inputs = [
     '0xff',
     factoryAddress,
-    keccak256(solidityPack(['address'], [token])),
-    keccak256(bytecode)
-  ];
-  const sanitizedInputs = `0x${createInputs.map(i => i.slice(2)).join('')}`;
-  return getAddress(`0x${keccak256(sanitizedInputs).slice(-40)}`);
+    // salt
+    utils.keccak256(constructorArgumentsEncoded),
+    // init code. bytecode + constructor arguments
+    utils.keccak256(bytecode),
+  ]
+  const sanitizedInputs = `0x${create2Inputs.map((i) => i.slice(2)).join('')}`
+  return utils.getAddress(`0x${utils.keccak256(sanitizedInputs).slice(-40)}`)
 }
