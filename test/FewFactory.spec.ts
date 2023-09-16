@@ -1,7 +1,7 @@
 import chai, { expect } from 'chai'
 import { Contract } from 'ethers'
+import { bigNumberify } from 'ethers/utils'
 import { solidity, MockProvider, createFixtureLoader, deployContract } from 'ethereum-waffle'
-
 import { expandTo18Decimals, getCreate2Address } from './shared/utilities'
 import { factoryFixture } from './shared/fewFixtures'
 
@@ -49,16 +49,15 @@ describe('FewFactory', () => {
   }
 
   async function createWrappedToken(tokenAddress: string) {
-    const bytecode = FewWrappedToken.deployedBytecode
+    const bytecode = FewWrappedToken.bytecode
     const create2Address = getCreate2Address(factory.address, tokenAddress, bytecode)
 
-    await factory.createToken(tokenAddress)
-    // await expect(factory.createToken(tokenAddress))
-    //   .to.emit(factory, 'WrappedTokenCreated')
-    // .withArgs(tokenAddress, create2Address, bigNumberify(1))
+    await expect(factory.createToken(tokenAddress))
+      .to.emit(factory, 'WrappedTokenCreated')
+    .withArgs(tokenAddress, create2Address, bigNumberify(1))
 
     await expect(factory.createToken(TEST_ADDRESSES[0])).to.be.reverted // token not been deployed
-    // expect(await factory.getWrappedToken(tokenAddress)).to.eq(create2Address)
+    expect(await factory.getWrappedToken(tokenAddress)).to.eq(create2Address)
     expect(await factory.allWrappedTokensLength()).to.eq(1)
 
   }
