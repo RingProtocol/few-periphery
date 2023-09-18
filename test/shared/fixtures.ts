@@ -40,6 +40,7 @@ interface V2Fixture {
   token: Contract
   WETH: Contract
   WETHPartner: Contract
+  fewWrappedWETHPartner: Contract
   factoryV1: Contract
   factoryV2: Contract
   fewFactory: Contract
@@ -54,8 +55,12 @@ interface V2Fixture {
   WETHExchangeV1: Contract
   pair: Contract
   WETHPair: Contract
-  wrappedTokenaddress: string
+  wrappedTokenAddress: string
   fewWrappedToken: Contract
+  fewWrappedToken0: Contract
+  fewWrappedToken1: Contract
+  wrappedPair: Contract
+  wrappedWETHPair: Contract
 }
 
 export async function v2Fixture(provider: Web3Provider, [wallet]: Wallet[]): Promise<V2Fixture> {
@@ -112,22 +117,47 @@ export async function v2Fixture(provider: Web3Provider, [wallet]: Wallet[]): Pro
   const WETHPairAddress = await factoryV2.getPair(WETH.address, WETHPartner.address)
   const WETHPair = new Contract(WETHPairAddress, JSON.stringify(IUniswapV2Pair.abi), provider).connect(wallet)
 
-  const tx = await fewFactory.createToken(token.address);
-  const receipt = await tx.wait()
-  const wrappedTokenaddress = receipt.events[0].args.wrappedToken
+  // const tx = await fewFactory.createToken(token.address);
+  // const receipt = await tx.wait()
+  // const wrappedTokenaddress = receipt.events[0].args.wrappedToken
   // console.log(receipt.events[0].args.wrappedToken, 'receipt')
-  console.log(wrappedTokenaddress, token.address, 'wrappedTokenaddress, token.address')
-  const address = await fewFactory.getWrappedToken(token.address)
-  console.log(address, 'address')
-  const fewWrappedToken = new Contract(wrappedTokenaddress, JSON.stringify(FewWrappedToken.abi), provider).connect(wallet)
+  // console.log(wrappedTokenaddress, token.address, 'wrappedTokenaddress, token.address')
+  // const address = await fewFactory.getWrappedToken(token.address)
+  // console.log(address, 'address')
+  // const fewWrappedToken = new Contract(wrappedTokenaddress, JSON.stringify(FewWrappedToken.abi), provider).connect(wallet)
   // const originalTokenFromContract = await fewWrappedToken.getWrappedToken;
   // console.log("Original Token from WrappedToken contract: ", originalTokenFromContract);
+
+  await fewFactory.createToken(token.address)
+  await fewFactory.createToken(token0.address)
+  await fewFactory.createToken(token1.address)
+  await fewFactory.createToken(WETHPartner.address)
+
+  const wrappedTokenAddress = await fewFactory.getWrappedToken(token.address)
+  const wrappedToken0 = await fewFactory.getWrappedToken(token0.address)
+  const wrappedToken1 = await fewFactory.getWrappedToken(token1.address)
+  const wrappedWETHPartner = await fewFactory.getWrappedToken(WETHPartner.address)
+
+  const fewWrappedToken = new Contract(wrappedToken0, JSON.stringify(FewWrappedToken.abi), provider).connect(wallet)
+  const fewWrappedToken0 = new Contract(wrappedToken0, JSON.stringify(FewWrappedToken.abi), provider).connect(wallet)
+  const fewWrappedToken1 = new Contract(wrappedToken1, JSON.stringify(FewWrappedToken.abi), provider).connect(wallet)
+  const fewWrappedWETHPartner = new Contract(wrappedWETHPartner, JSON.stringify(FewWrappedToken.abi), provider).connect(wallet)
+
+  await factoryV2.createPair(fewWrappedToken0.address, fewWrappedToken1.address)
+  const wrappedPairAddress = await factoryV2.getPair(fewWrappedToken0.address, fewWrappedToken1.address)
+  const wrappedPair = new Contract(wrappedPairAddress, JSON.stringify(IUniswapV2Pair.abi), provider).connect(wallet)
+
+  await factoryV2.createPair(fwWETH.address, fewWrappedWETHPartner.address)
+  const wrappedWETHPairAddress = await factoryV2.getPair(fwWETH.address, fewWrappedWETHPartner.address)
+  const wrappedWETHPair = new Contract(wrappedWETHPairAddress, JSON.stringify(IUniswapV2Pair.abi), provider).connect(wallet)
+
   return {
     token0,
     token1,
     token,
     WETH,
     WETHPartner,
+    fewWrappedWETHPartner,
     factoryV1,
     factoryV2,
     fewFactory,
@@ -142,7 +172,11 @@ export async function v2Fixture(provider: Web3Provider, [wallet]: Wallet[]): Pro
     WETHExchangeV1,
     pair,
     WETHPair,
-    wrappedTokenaddress,
-    fewWrappedToken
+    wrappedTokenAddress,
+    fewWrappedToken,
+    fewWrappedToken0,
+    fewWrappedToken1,
+    wrappedPair,
+    wrappedWETHPair
   }
 }
