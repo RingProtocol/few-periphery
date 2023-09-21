@@ -155,9 +155,4 @@ describe('FewWrappedToken', () => {
     // Ensure the balance is deducted after burning
     expect(await fewWrappedToken.balanceOf(targetAddress)).to.eq(tokenAmount)
 })
-
-  // async function addLiquidity(tokenAmount: BigNumber) {
-  //   await token.transfer(fewWrappedToken.address, tokenAmount)
-  //   await fewWrappedToken.mint(wallet.address, overrides)
-  // }
 })

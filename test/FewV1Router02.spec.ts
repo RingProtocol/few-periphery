@@ -280,6 +280,17 @@ describe('fee-on-transfer tokens', () => {
     await wrappedPair.approve(fewRouter.address, MaxUint256)
     await wrappedPair.approve(fewRouterFeeOnTransfer.address, MaxUint256)
 
+    await wrappedDTT.approve(fewRouter.address, MaxUint256)
+    await wrappedDTT.approve(fewRouterFeeOnTransfer.address, MaxUint256)
+
+    await fwWETH.approve(fewRouter.address, MaxUint256)
+    await fwWETH.approve(fewRouterFeeOnTransfer.address, MaxUint256)
+
+    await WETH.approve(fewRouter.address, MaxUint256)
+    await DTT.approve(fewRouterFeeOnTransfer.address, MaxUint256)
+
+    await WETH.deposit({ value: fwWETHAmount })
+
     // await fewRouterFeeOnTransfer.removeLiquidityETHSupportingFeeOnTransferTokens(
     //   wrappedDTT.address,
     //   wrappedLiquidity,
