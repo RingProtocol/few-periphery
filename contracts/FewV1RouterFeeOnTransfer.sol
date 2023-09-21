@@ -67,7 +67,7 @@ contract FewV1RouterFeeOnTransfer is IFewV1RouterFeeOnTransfer {
     ) public virtual override ensure(deadline) returns (uint amountETH) {
         (, amountETH) = removeLiquidity(
             token,
-            WETH,
+            fwWETH,
             liquidity,
             amountTokenMin,
             amountETHMin,

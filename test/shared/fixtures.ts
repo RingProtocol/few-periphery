@@ -37,6 +37,8 @@ export async function factoryFixture(_: Web3Provider, [wallet]: Wallet[]): Promi
 interface V2Fixture {
   token0: Contract
   token1: Contract
+  tokenC: Contract
+  tokenD: Contract
   token: Contract
   WETH: Contract
   WETHPartner: Contract
@@ -69,6 +71,8 @@ export async function v2Fixture(provider: Web3Provider, [wallet]: Wallet[]): Pro
   // deploy tokens
   const tokenA = await deployContract(wallet, ERC20, [expandTo18Decimals(10000)])
   const tokenB = await deployContract(wallet, ERC20, [expandTo18Decimals(10000)])
+  const tokenC = await deployContract(wallet, ERC20, [expandTo18Decimals(10000)])
+  const tokenD = await deployContract(wallet, ERC20, [expandTo18Decimals(10000)])
   const token = await deployContract(wallet, ERC20, [expandTo18Decimals(10000)])
 
   const WETH = await deployContract(wallet, WETH9)
@@ -117,17 +121,6 @@ export async function v2Fixture(provider: Web3Provider, [wallet]: Wallet[]): Pro
   const WETHPairAddress = await factoryV2.getPair(WETH.address, WETHPartner.address)
   const WETHPair = new Contract(WETHPairAddress, JSON.stringify(IUniswapV2Pair.abi), provider).connect(wallet)
 
-  // const tx = await fewFactory.createToken(token.address);
-  // const receipt = await tx.wait()
-  // const wrappedTokenaddress = receipt.events[0].args.wrappedToken
-  // console.log(receipt.events[0].args.wrappedToken, 'receipt')
-  // console.log(wrappedTokenaddress, token.address, 'wrappedTokenaddress, token.address')
-  // const address = await fewFactory.getWrappedToken(token.address)
-  // console.log(address, 'address')
-  // const fewWrappedToken = new Contract(wrappedTokenaddress, JSON.stringify(FewWrappedToken.abi), provider).connect(wallet)
-  // const originalTokenFromContract = await fewWrappedToken.getWrappedToken;
-  // console.log("Original Token from WrappedToken contract: ", originalTokenFromContract);
-
   await fewFactory.createToken(token.address)
   await fewFactory.createToken(token0.address)
   await fewFactory.createToken(token1.address)
@@ -155,6 +148,8 @@ export async function v2Fixture(provider: Web3Provider, [wallet]: Wallet[]): Pro
     token0,
     token1,
     token,
+    tokenC,
+    tokenD,
     WETH,
     WETHPartner,
     fewWrappedWETHPartner,
