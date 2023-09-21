@@ -11,7 +11,7 @@ import FewWrappedToken from './contractBuild/FewWrappedToken.json'
 import ERC20 from '../../build/ERC20.json'
 
 interface FactoryFixture {
-  factory: Contract
+  factory: Contract  
 }
 
 const overrides = {
@@ -41,4 +41,3 @@ export async function fewWrappedTokenFixture(provider: Web3Provider, [wallet]: W
 
   return { factory, token, fewWrappedToken }
 }
-
