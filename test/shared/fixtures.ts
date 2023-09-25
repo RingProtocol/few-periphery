@@ -12,12 +12,15 @@ import FewWrappedToken from './contractBuild/FewWrappedToken.json'
 
 import ERC20 from '../../build/ERC20.json'
 import WETH9 from '../../build/WETH9.json'
+import DeflatingERC20 from '../../build/DeflatingERC20.json'
 import UniswapV1Exchange from '../../build/UniswapV1Exchange.json'
 import UniswapV1Factory from '../../build/UniswapV1Factory.json'
 import UniswapV2Router01 from '../../build/UniswapV2Router01.json'
 import UniswapV2Migrator from '../../build/UniswapV2Migrator.json'
 import UniswapV2Router02 from '../../build/UniswapV2Router02.json'
 import FewV1Router from '../../build/FewV1Router.json'
+import FewV2Router from '../../build/FewV2Router.json'
+
 import FewV1RouterFeeOnTransfer from '../../build/FewV1RouterFeeOnTransfer.json'
 import RouterEventEmitter from '../../build/RouterEventEmitter.json'
 
@@ -40,6 +43,7 @@ interface V2Fixture {
   tokenC: Contract
   tokenD: Contract
   token: Contract
+  DTT: Contract
   WETH: Contract
   WETHPartner: Contract
   fewWrappedWETHPartner: Contract
@@ -49,6 +53,7 @@ interface V2Fixture {
   router01: Contract
   router02: Contract
   fewRouter: Contract
+  fewV2Router: Contract
   fewRouterFeeOnTransfer: Contract
   fwWETH: Contract
   routerEventEmitter: Contract
@@ -61,8 +66,11 @@ interface V2Fixture {
   fewWrappedToken: Contract
   fewWrappedToken0: Contract
   fewWrappedToken1: Contract
+  fewWrappedDTT: Contract
   wrappedPair: Contract
   wrappedWETHPair: Contract
+  wrappedWETHDTTPair: Contract
+  DTTToken1Pair: Contract
 }
 
 export async function v2Fixture(provider: Web3Provider, [wallet]: Wallet[]): Promise<V2Fixture> {
@@ -74,6 +82,7 @@ export async function v2Fixture(provider: Web3Provider, [wallet]: Wallet[]): Pro
   const tokenC = await deployContract(wallet, ERC20, [expandTo18Decimals(10000)])
   const tokenD = await deployContract(wallet, ERC20, [expandTo18Decimals(10000)])
   const token = await deployContract(wallet, ERC20, [expandTo18Decimals(10000)])
+  const DTT = await deployContract(wallet, DeflatingERC20, [expandTo18Decimals(10000)])
 
   const WETH = await deployContract(wallet, WETH9)
   const WETHPartner = await deployContract(wallet, ERC20, [expandTo18Decimals(10000)])
@@ -93,6 +102,8 @@ export async function v2Fixture(provider: Web3Provider, [wallet]: Wallet[]): Pro
   const router01 = await deployContract(wallet, UniswapV2Router01, [factoryV2.address, WETH.address], overrides)
   const router02 = await deployContract(wallet, UniswapV2Router02, [factoryV2.address, WETH.address], overrides)
   const fewRouter = await deployContract(wallet, FewV1Router, [factoryV2.address, WETH.address, fewFactory.address, fwWETH.address], overrides)
+  const fewV2Router = await deployContract(wallet, FewV2Router, [factoryV2.address, WETH.address, fewFactory.address, fwWETH.address], overrides)
+
   const fewRouterFeeOnTransfer = await deployContract(wallet, FewV1RouterFeeOnTransfer, [factoryV2.address, WETH.address, fewFactory.address, fwWETH.address], overrides)
 
   // event emitter for testing
@@ -125,16 +136,19 @@ export async function v2Fixture(provider: Web3Provider, [wallet]: Wallet[]): Pro
   await fewFactory.createToken(token0.address)
   await fewFactory.createToken(token1.address)
   await fewFactory.createToken(WETHPartner.address)
+  await fewFactory.createToken(DTT.address)
 
   const wrappedTokenAddress = await fewFactory.getWrappedToken(token.address)
   const wrappedToken0 = await fewFactory.getWrappedToken(token0.address)
   const wrappedToken1 = await fewFactory.getWrappedToken(token1.address)
   const wrappedWETHPartner = await fewFactory.getWrappedToken(WETHPartner.address)
+  const wrappedDTT = await fewFactory.getWrappedToken(DTT.address)
 
   const fewWrappedToken = new Contract(wrappedToken0, JSON.stringify(FewWrappedToken.abi), provider).connect(wallet)
   const fewWrappedToken0 = new Contract(wrappedToken0, JSON.stringify(FewWrappedToken.abi), provider).connect(wallet)
   const fewWrappedToken1 = new Contract(wrappedToken1, JSON.stringify(FewWrappedToken.abi), provider).connect(wallet)
   const fewWrappedWETHPartner = new Contract(wrappedWETHPartner, JSON.stringify(FewWrappedToken.abi), provider).connect(wallet)
+  const fewWrappedDTT = new Contract(wrappedDTT, JSON.stringify(FewWrappedToken.abi), provider).connect(wallet)
 
   await factoryV2.createPair(fewWrappedToken0.address, fewWrappedToken1.address)
   const wrappedPairAddress = await factoryV2.getPair(fewWrappedToken0.address, fewWrappedToken1.address)
@@ -144,12 +158,21 @@ export async function v2Fixture(provider: Web3Provider, [wallet]: Wallet[]): Pro
   const wrappedWETHPairAddress = await factoryV2.getPair(fwWETH.address, fewWrappedWETHPartner.address)
   const wrappedWETHPair = new Contract(wrappedWETHPairAddress, JSON.stringify(IUniswapV2Pair.abi), provider).connect(wallet)
 
+  await factoryV2.createPair(fewWrappedDTT.address, fewWrappedToken1.address)
+  const DTTToken1PairAddress = await factoryV2.getPair(fewWrappedDTT.address, fewWrappedToken1.address)
+  const DTTToken1Pair = new Contract(DTTToken1PairAddress, JSON.stringify(IUniswapV2Pair.abi), provider).connect(wallet)
+
+  await factoryV2.createPair(fwWETH.address, fewWrappedDTT.address)
+  const wrappedWETHDTTPairAddress = await factoryV2.getPair(fwWETH.address, fewWrappedDTT.address)
+  const wrappedWETHDTTPair = new Contract(wrappedWETHDTTPairAddress, JSON.stringify(IUniswapV2Pair.abi), provider).connect(wallet)
+
   return {
     token0,
     token1,
     token,
     tokenC,
     tokenD,
+    DTT,
     WETH,
     WETHPartner,
     fewWrappedWETHPartner,
@@ -159,6 +182,7 @@ export async function v2Fixture(provider: Web3Provider, [wallet]: Wallet[]): Pro
     router01,
     router02,
     fewRouter,
+    fewV2Router,
     fewRouterFeeOnTransfer,
     fwWETH,
     router: router02, // the default router, 01 had a minor bug
@@ -171,7 +195,10 @@ export async function v2Fixture(provider: Web3Provider, [wallet]: Wallet[]): Pro
     fewWrappedToken,
     fewWrappedToken0,
     fewWrappedToken1,
+    fewWrappedDTT,
     wrappedPair,
-    wrappedWETHPair
+    wrappedWETHPair,
+    wrappedWETHDTTPair,
+    DTTToken1Pair
   }
 }

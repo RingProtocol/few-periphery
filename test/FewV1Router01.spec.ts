@@ -7,8 +7,6 @@ import { ecsign } from 'ethereumjs-util'
 
 import { expandTo18Decimals, getApprovalDigest, getFewWrappedTokenApprovalDigest, mineBlock, MINIMUM_LIQUIDITY } from './shared/utilities'
 import { v2Fixture } from './shared/fixtures'
-import IUniswapV2Pair from '@uniswap/v2-core/build/IUniswapV2Pair.json'
-import IFewWrappedToken from './shared/contractBuild/IFewWrappedToken.json'
 
 chai.use(solidity)
 
@@ -17,13 +15,10 @@ const overrides = {
 }
 
 enum RouterVersion {
-  // UniswapV2Router01 = 'UniswapV2Router01',
-  // UniswapV2Router02 = 'UniswapV2Router02',
   FewV1Router = 'FewV1Router',
-  // FewV1RouterFeeOnTransfer = 'FewV1RouterFeeOnTransfer'
 }
 
-describe('UniswapV2Router{01,02}, FewV1Router', () => {
+describe('FewV1Router{01,02}, FewV1Router', () => {
   for (const routerVersion of Object.keys(RouterVersion)) {
     const provider = new MockProvider({
       hardfork: 'istanbul',
@@ -67,10 +62,7 @@ describe('UniswapV2Router{01,02}, FewV1Router', () => {
       factory = fixture.factoryV2
       fewFactory = fixture.fewFactory
       router = {
-        // [RouterVersion.UniswapV2Router01]: fixture.router01,
-        // [RouterVersion.UniswapV2Router02]: fixture.router02,
         [RouterVersion.FewV1Router]: fixture.fewRouter,
-        // [RouterVersion.FewV1RouterFeeOnTransfer]: fixture.fewRouterFeeOnTransfer
       }[routerVersion as RouterVersion]
       pair = fixture.pair
       wrappedPair = fixture.wrappedPair
@@ -81,14 +73,7 @@ describe('UniswapV2Router{01,02}, FewV1Router', () => {
     })
     
     describe(routerVersion, () => {
-      // async function getwrappedPairAddress() {
-      //   await factory.createPair(fewWrappedToken0.address, fewWrappedToken1.address)
-      //   const wrappedPairAddress = await factory.getPair(fewWrappedToken0.address, fewWrappedToken1.address)
-      //   console.log(wrappedPairAddress, 'wrappedPairAddress')
-      // }
-
       it('factory, WETH', async () => {
-        // getwrappedPairAddress()
         expect(await router.factory()).to.eq(factory.address)
         expect(await router.fewFactory()).to.eq(fewFactory.address)
         expect(await router.WETH()).to.eq(WETH.address)
@@ -169,41 +154,6 @@ describe('UniswapV2Router{01,02}, FewV1Router', () => {
 
         expect(await wrappedWETHPair.balanceOf(wallet.address)).to.eq(expectedLiquidity.sub(MINIMUM_LIQUIDITY))
       })
-
-      // async function newAddLiquidity(token0Amount: BigNumber, token1Amount: BigNumber) {
-      //   await fewFactory.createToken(tokenC.address)
-      //   const wrappedTokenCAddress = await fewFactory.getWrappedToken(tokenC.address)
-      //   const wrappedTokenC = new Contract(wrappedTokenCAddress, JSON.stringify(IFewWrappedToken.abi), provider).connect(wallet)
-
-      //   await fewFactory.createToken(tokenD.address)
-      //   const wrappedTokenDAddress = await fewFactory.getWrappedToken(tokenD.address)
-      //   const wrappedTokenD = new Contract(wrappedTokenDAddress, JSON.stringify(IFewWrappedToken.abi), provider).connect(wallet)
-
-      //   // await token0.approve(fewWrappedToken0.address, token0Amount, overrides)
-      //   // await token1.approve(fewWrappedToken1.address, token1Amount, overrides)
-      //   await tokenC.approve(wrappedTokenCAddress.address, token0Amount, overrides)
-      //   await tokenD.approve(wrappedTokenDAddress.address, token1Amount, overrides)
-
-      //   // await fewWrappedToken0.wrap(token0Amount, overrides)
-      //   // await fewWrappedToken1.wrap(token1Amount, overrides)
-      //   await wrappedTokenC.wrap(token0Amount, overrides)
-      //   await wrappedTokenD.wrap(token1Amount, overrides)
-
-      //   const wrappedPairAddress = await factory.getPair(wrappedTokenC.address, wrappedTokenD.address)
-      //   const wrappedPair = new Contract(wrappedPairAddress, JSON.stringify(IUniswapV2Pair.abi), provider).connect(wallet)
-
-      //   // await fewWrappedToken0.transfer(wrappedPair.address, token0Amount)
-      //   // await fewWrappedToken1.transfer(wrappedPair.address, token1Amount)
-      //   await wrappedTokenC.transfer(wrappedPair.address, token0Amount)
-      //   await wrappedTokenD.transfer(wrappedPair.address, token1Amount)
-
-      //   // await fewWrappedToken0.approve(wrappedPair.address, MaxUint256)
-      //   // await fewWrappedToken1.approve(wrappedPair.address, MaxUint256)
-      //   await wrappedTokenC.approve(wrappedPair.address, MaxUint256)
-      //   await wrappedTokenD.approve(wrappedPair.address, MaxUint256)
-        
-      //   await wrappedPair.mint(wallet.address, overrides)
-      // }
 
       it('few gas 1', async () => {
         const token0Amount = expandTo18Decimals(1)
@@ -320,7 +270,6 @@ describe('UniswapV2Router{01,02}, FewV1Router', () => {
         await WETHPartner.approve(fewWrappedWETHPartner.address, WETHPartnerAmount, overrides)
 
         await WETH.deposit({ value: fwWETHAmount })
-        // await WETH.transfer(WETHPair.address, fwWETHAmount)
         await WETH.approve(fwWETH.address, fwWETHAmount, overrides)
         
         await fewWrappedWETHPartner.wrap(WETHPartnerAmount, overrides)
@@ -334,16 +283,6 @@ describe('UniswapV2Router{01,02}, FewV1Router', () => {
 
         await wrappedWETHPair.mint(wallet.address, overrides)
         await wrappedWETHPair.approve(router.address, MaxUint256, overrides)
-
-        const wrappedWETHPairBalance = await wrappedWETHPair.balanceOf(wallet.address)
-        // console.log(wrappedWETHPairBalance.toString(), '1wrappedWETHPairBalance')
-
-        await fewWrappedToken0.approve(router.address, MaxUint256)
-        await token0.approve(router.address, MaxUint256)
-        await fewWrappedWETHPartner.approve(router.address, MaxUint256)
-        await fwWETH.approve(router.address, MaxUint256)
-        await WETH.approve(router.address, MaxUint256)
-        await WETHPartner.approve(router.address, MaxUint256)
       }
 
       it('removeLiquidityETH', async () => {
@@ -402,9 +341,6 @@ describe('UniswapV2Router{01,02}, FewV1Router', () => {
         const expectedLiquidity = expandTo18Decimals(2)
 
         const nonce = await wrappedPair.nonces(wallet.address)
-        const name = await pair.name()
-        console.log(await wrappedPair.name(), 'wrappedPair')
-        console.log(name, 'namename')
         const digest = await getApprovalDigest(
           wrappedPair,
           { owner: wallet.address, spender: router.address, value: expectedLiquidity.sub(MINIMUM_LIQUIDITY) },
@@ -601,8 +537,6 @@ describe('UniswapV2Router{01,02}, FewV1Router', () => {
 
         beforeEach(async () => {
           await addLiquidityWrappedETH(wrappedWETHPartnerAmount, fwWETHAmount)
-          const wrappedWETHPairBalance = await wrappedWETHPair.balanceOf(wallet.address)
-          console.log(wrappedWETHPairBalance.toString(), 'aaawrappedWETHPairBalance')
         })
 
         it('happy path', async () => {
@@ -679,9 +613,7 @@ describe('UniswapV2Router{01,02}, FewV1Router', () => {
           const receipt = await tx.wait()
           expect(receipt.gasUsed).to.eq(
             {
-              // [RouterVersion.UniswapV2Router01]: 138770,
-              // [RouterVersion.UniswapV2Router02]: 138770
-              [RouterVersion.FewV1Router]: 206449
+              [RouterVersion.FewV1Router]: 206367
             }[routerVersion as RouterVersion]
           )
         }).retries(3)
