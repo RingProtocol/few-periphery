@@ -95,19 +95,19 @@ describe('FewV2Router{01,02}, FewV1Router', () => {
           )
         )
         .to.emit(fewWrappedDTTPairDTT, 'Transfer')
-        .withArgs(wallet.address, router.address, wrappedToken0Amount.sub(wrappedToken0Amount.div(100)))
+        .withArgs(wallet.address, router.address, wrappedToken0Amount)
         .to.emit(fewWrappedDTTPairOriginalToken1, 'Transfer')
-        .withArgs(wallet.address, router.address, wrappedToken1Amount)
+        .withArgs(wallet.address, router.address, wrappedToken1Amount.sub(wrappedToken1Amount.div(100)))
         .to.emit(fewWrappedDTTPair, 'Transfer')
         .withArgs(AddressZero, AddressZero, MINIMUM_LIQUIDITY)
         .to.emit(fewWrappedDTT, 'Wrap')
-        .withArgs(router.address, wrappedToken0Amount.sub(wrappedToken0Amount.div(100)), fewWrappedDTTPair.address)
+        .withArgs(router.address, wrappedToken1Amount.sub(wrappedToken1Amount.div(100)), fewWrappedDTTPair.address)
         .to.emit(fewWrappedTokenB, 'Wrap')
-        .withArgs(router.address, wrappedToken1Amount, fewWrappedDTTPair.address)
+        .withArgs(router.address, wrappedToken0Amount, fewWrappedDTTPair.address)
         .to.emit(fewWrappedDTTPair, 'Sync')
-        .withArgs(wrappedToken1Amount, wrappedToken0Amount.sub(wrappedToken0Amount.div(100)))
+        .withArgs(wrappedToken1Amount.sub(wrappedToken1Amount.div(100)), wrappedToken0Amount)
         .to.emit(fewWrappedDTTPair, 'Mint')
-        .withArgs(router.address, wrappedToken1Amount, wrappedToken0Amount.sub(wrappedToken0Amount.div(100)))
+        .withArgs(router.address, wrappedToken1Amount.sub(wrappedToken1Amount.div(100)), wrappedToken0Amount)
       })
 
       it('addLiquidityDTTETH', async () => {
@@ -119,12 +119,12 @@ describe('FewV2Router{01,02}, FewV1Router', () => {
         const pairDTTAmount = transferDTTAmount.sub(transferDTTAmount.div(100))
         const expectedLiquidity = expandTo18Decimals(2)
         const wrappedWETHDTTPairToken0 = await wrappedWETHDTTPair.token0()
-        await fewWrappedDTTPairDTT.approve(router.address, MaxUint256)
-        
+        await DTT.approve(router.address, MaxUint256)
+
         expectedLiquidity.sub(MINIMUM_LIQUIDITY)
         await expect(
           router.addLiquidityETH(
-            fewWrappedDTTPairDTT.address,
+            DTT.address,
             fewWrappedDTTAmount,
             fewWrappedDTTAmount,
             wrappedETHAmount,
@@ -195,9 +195,9 @@ describe('FewV2Router{01,02}, FewV1Router', () => {
           .to.emit(fewWrappedTokenB, 'Transfer')
           .withArgs(fewWrappedDTTPair.address, router.address, wrappedToken1Amount.sub(2000))
           .to.emit(fewWrappedDTTPair, 'Sync')
-          .withArgs(2000, 500)
+          .withArgs(500, 2000)
           .to.emit(fewWrappedDTTPair, 'Burn')
-          .withArgs(router.address, wrappedToken1Amount.sub(2000), wrappedDTTAmount.sub(500), router.address)
+          .withArgs(router.address, wrappedDTTAmount.sub(500), wrappedToken1Amount.sub(2000), router.address)
 
         expect(await fewWrappedDTTPair.balanceOf(wallet.address)).to.eq(0)
         const totalSupplyToken1 = await fewWrappedTokenB.totalSupply()
