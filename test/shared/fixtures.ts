@@ -28,21 +28,12 @@ const overrides = {
   gasLimit: 9999999
 }
 
-interface FactoryFixture {
-  fewFactory: Contract
-}
-
-export async function factoryFixture(_: Web3Provider, [wallet]: Wallet[]): Promise<FactoryFixture> {
-  const fewFactory = await deployContract(wallet, FewFactory, [wallet.address], overrides)
-  return { fewFactory }
-}
-
 interface V2Fixture {
   token0: Contract
   token1: Contract
+  tokenB: Contract
   tokenC: Contract
   tokenD: Contract
-  token: Contract
   DTT: Contract
   WETH: Contract
   WETHPartner: Contract
@@ -62,28 +53,27 @@ interface V2Fixture {
   WETHExchangeV1: Contract
   pair: Contract
   WETHPair: Contract
-  wrappedTokenAddress: string
-  fewWrappedToken: Contract
   fewWrappedToken0: Contract
   fewWrappedToken1: Contract
+  fewWrappedTokenB: Contract
   fewWrappedDTT: Contract
-  wrappedPair: Contract
-  wrappedWETHPair: Contract
-  wrappedWETHDTTPair: Contract
-  DTTToken1Pair: Contract
+  fewWrappedTokenABPair: Contract
+  fewWrappedWETHPair: Contract
+  fewWrappedDTTPair: Contract
+  fewWrappedWETHDTTPair: Contract
+  fewWrappedToken0OriginalToken: Contract
+  fewWrappedToken1OriginalToken: Contract
+  fewWrappedDTTPairDTT: Contract
+  fewWrappedDTTPairOriginalToken1: Contract
 }
 
 export async function v2Fixture(provider: Web3Provider, [wallet]: Wallet[]): Promise<V2Fixture> {
-  const { fewFactory } = await factoryFixture(provider, [wallet])
-
   // deploy tokens
   const tokenA = await deployContract(wallet, ERC20, [expandTo18Decimals(10000)])
   const tokenB = await deployContract(wallet, ERC20, [expandTo18Decimals(10000)])
   const tokenC = await deployContract(wallet, ERC20, [expandTo18Decimals(10000)])
   const tokenD = await deployContract(wallet, ERC20, [expandTo18Decimals(10000)])
-  const token = await deployContract(wallet, ERC20, [expandTo18Decimals(10000)])
   const DTT = await deployContract(wallet, DeflatingERC20, [expandTo18Decimals(10000)])
-
   const WETH = await deployContract(wallet, WETH9)
   const WETHPartner = await deployContract(wallet, ERC20, [expandTo18Decimals(10000)])
 
@@ -93,17 +83,20 @@ export async function v2Fixture(provider: Web3Provider, [wallet]: Wallet[]): Pro
 
   // deploy V2
   const factoryV2 = await deployContract(wallet, UniswapV2Factory, [wallet.address])
-  // const fewFactory = await deployContract(wallet, FewFactory, [wallet.address])
-  await fewFactory.createToken(WETH.address);
-  const fwWETHAddress = await fewFactory.getWrappedToken(WETH.address)
-  const fwWETH = new Contract(fwWETHAddress, JSON.stringify(IFewWrappedToken.abi), provider).connect(wallet)
+
+  //deploy Few Factory
+  const fewFactory = await deployContract(wallet, FewFactory, [wallet.address])
 
   // deploy routers
   const router01 = await deployContract(wallet, UniswapV2Router01, [factoryV2.address, WETH.address], overrides)
   const router02 = await deployContract(wallet, UniswapV2Router02, [factoryV2.address, WETH.address], overrides)
+
+  await fewFactory.createToken(WETH.address);
+  const fwWETHAddress = await fewFactory.getWrappedToken(WETH.address)
+  const fwWETH = new Contract(fwWETHAddress, JSON.stringify(IFewWrappedToken.abi), provider).connect(wallet)
+
   const fewRouter = await deployContract(wallet, FewV1Router, [factoryV2.address, WETH.address, fewFactory.address, fwWETH.address], overrides)
   const fewV2Router = await deployContract(wallet, FewV2Router, [factoryV2.address, WETH.address, fewFactory.address, fwWETH.address], overrides)
-
   const fewRouterFeeOnTransfer = await deployContract(wallet, FewV1RouterFeeOnTransfer, [factoryV2.address, WETH.address, fewFactory.address, fwWETH.address], overrides)
 
   // event emitter for testing
@@ -132,44 +125,67 @@ export async function v2Fixture(provider: Web3Provider, [wallet]: Wallet[]): Pro
   const WETHPairAddress = await factoryV2.getPair(WETH.address, WETHPartner.address)
   const WETHPair = new Contract(WETHPairAddress, JSON.stringify(IUniswapV2Pair.abi), provider).connect(wallet)
 
-  await fewFactory.createToken(token.address)
-  await fewFactory.createToken(token0.address)
-  await fewFactory.createToken(token1.address)
+  // initialize FewV1
+  await fewFactory.createToken(tokenA.address)
+  await fewFactory.createToken(tokenB.address)
   await fewFactory.createToken(WETHPartner.address)
   await fewFactory.createToken(DTT.address)
 
-  const wrappedTokenAddress = await fewFactory.getWrappedToken(token.address)
-  const wrappedToken0 = await fewFactory.getWrappedToken(token0.address)
-  const wrappedToken1 = await fewFactory.getWrappedToken(token1.address)
-  const wrappedWETHPartner = await fewFactory.getWrappedToken(WETHPartner.address)
-  const wrappedDTT = await fewFactory.getWrappedToken(DTT.address)
+  const wrappedTokenAAddress = await fewFactory.getWrappedToken(tokenA.address)
+  const wrappedTokenBAddress = await fewFactory.getWrappedToken(tokenB.address)
+  const wrappedWETHPartnerAddress = await fewFactory.getWrappedToken(WETHPartner.address)
+  const wrappedDTTAddress = await fewFactory.getWrappedToken(DTT.address)
 
-  const fewWrappedToken = new Contract(wrappedToken0, JSON.stringify(FewWrappedToken.abi), provider).connect(wallet)
-  const fewWrappedToken0 = new Contract(wrappedToken0, JSON.stringify(FewWrappedToken.abi), provider).connect(wallet)
-  const fewWrappedToken1 = new Contract(wrappedToken1, JSON.stringify(FewWrappedToken.abi), provider).connect(wallet)
-  const fewWrappedWETHPartner = new Contract(wrappedWETHPartner, JSON.stringify(FewWrappedToken.abi), provider).connect(wallet)
-  const fewWrappedDTT = new Contract(wrappedDTT, JSON.stringify(FewWrappedToken.abi), provider).connect(wallet)
+  const fewWrappedTokenA = new Contract(wrappedTokenAAddress, JSON.stringify(FewWrappedToken.abi), provider).connect(wallet)
+  const fewWrappedTokenB = new Contract(wrappedTokenBAddress, JSON.stringify(FewWrappedToken.abi), provider).connect(wallet)
+  const fewWrappedWETHPartner = new Contract(wrappedWETHPartnerAddress, JSON.stringify(FewWrappedToken.abi), provider).connect(wallet)
+  const fewWrappedDTT = new Contract(wrappedDTTAddress, JSON.stringify(FewWrappedToken.abi), provider).connect(wallet)
 
-  await factoryV2.createPair(fewWrappedToken0.address, fewWrappedToken1.address)
-  const wrappedPairAddress = await factoryV2.getPair(fewWrappedToken0.address, fewWrappedToken1.address)
-  const wrappedPair = new Contract(wrappedPairAddress, JSON.stringify(IUniswapV2Pair.abi), provider).connect(wallet)
+  // crate fewWrapped pairs
+  await factoryV2.createPair(fewWrappedTokenA.address, fewWrappedTokenB.address)
+  const fewWrappedTokenABPairAddress = await factoryV2.getPair(fewWrappedTokenA.address, fewWrappedTokenB.address)
+  const fewWrappedTokenABPair = new Contract(fewWrappedTokenABPairAddress, JSON.stringify(IUniswapV2Pair.abi), provider).connect(wallet)
 
   await factoryV2.createPair(fwWETH.address, fewWrappedWETHPartner.address)
-  const wrappedWETHPairAddress = await factoryV2.getPair(fwWETH.address, fewWrappedWETHPartner.address)
-  const wrappedWETHPair = new Contract(wrappedWETHPairAddress, JSON.stringify(IUniswapV2Pair.abi), provider).connect(wallet)
+  const fewWrappedWETHPairAddress = await factoryV2.getPair(fwWETH.address, fewWrappedWETHPartner.address)
+  const fewWrappedWETHPair = new Contract(fewWrappedWETHPairAddress, JSON.stringify(IUniswapV2Pair.abi), provider).connect(wallet)
 
-  await factoryV2.createPair(fewWrappedDTT.address, fewWrappedToken1.address)
-  const DTTToken1PairAddress = await factoryV2.getPair(fewWrappedDTT.address, fewWrappedToken1.address)
-  const DTTToken1Pair = new Contract(DTTToken1PairAddress, JSON.stringify(IUniswapV2Pair.abi), provider).connect(wallet)
+  await factoryV2.createPair(fewWrappedDTT.address, fewWrappedTokenB.address)
+  const fewWrappedDTTPairAddress = await factoryV2.getPair(fewWrappedDTT.address, fewWrappedTokenB.address)
+  const fewWrappedDTTPair = new Contract(fewWrappedDTTPairAddress, JSON.stringify(IUniswapV2Pair.abi), provider).connect(wallet)
 
   await factoryV2.createPair(fwWETH.address, fewWrappedDTT.address)
-  const wrappedWETHDTTPairAddress = await factoryV2.getPair(fwWETH.address, fewWrappedDTT.address)
-  const wrappedWETHDTTPair = new Contract(wrappedWETHDTTPairAddress, JSON.stringify(IUniswapV2Pair.abi), provider).connect(wallet)
+  const fewWrappedWETHDTTPairAddress = await factoryV2.getPair(fwWETH.address, fewWrappedDTT.address)
+  const fewWrappedWETHDTTPair = new Contract(fewWrappedWETHDTTPairAddress, JSON.stringify(IUniswapV2Pair.abi), provider).connect(wallet)
+
+  // sort wrappedTokens
+  const fewWrappedToken0Address = await fewWrappedTokenABPair.token0()
+  const fewWrappedToken0 = fewWrappedTokenA.address === fewWrappedToken0Address ? fewWrappedTokenA : fewWrappedTokenB
+  const fewWrappedToken1 = fewWrappedTokenA.address === fewWrappedToken0Address ? fewWrappedTokenB : fewWrappedTokenA
+
+  const fewWrappedToken0OriginalTokenAddress = await fewWrappedToken0.token()
+  const fewWrappedToken1OriginalTokenAddress = await fewWrappedToken1.token()
+
+  const fewWrappedToken0OriginalToken = new Contract(fewWrappedToken0OriginalTokenAddress, JSON.stringify(ERC20.abi), provider).connect(wallet)
+  const fewWrappedToken1OriginalToken = new Contract(fewWrappedToken1OriginalTokenAddress, JSON.stringify(ERC20.abi), provider).connect(wallet)
+
+  const fewWrappedDTTPairToken0Address = await fewWrappedDTTPair.token0()
+  const fewWrappedDTTPairToken0 = fewWrappedDTT.address === fewWrappedDTTPairToken0Address ? fewWrappedDTT : fewWrappedTokenB
+  const fewWrappedDTTPairToken1 = fewWrappedDTT.address === fewWrappedDTTPairToken0Address ? fewWrappedTokenB : fewWrappedDTT
+
+  const fewWrappedDTTPairToken0OriginalTokenAddress = await fewWrappedDTTPairToken0.token()
+  const fewWrappedDTTPairToken1OriginalTokenAddress = await fewWrappedDTTPairToken1.token()
+
+  // console.log(fewWrappedDTTPairToken0OriginalTokenAddress, DTT.address, 'dtt')
+  // console.log(fewWrappedDTTPairToken1OriginalTokenAddress, tokenB.address, 'fewWrappedDTTPairToken1OriginalTokenAddress')
+  // console.log(fewWrappedDTTPairToken0OriginalTokenAddress, fewWrappedDTTPairToken1OriginalTokenAddress, 'eee')
+  const fewWrappedDTTPairOriginalToken1 = new Contract(fewWrappedDTTPairToken0OriginalTokenAddress, JSON.stringify(DeflatingERC20.abi), provider).connect(wallet)
+  const fewWrappedDTTPairDTT = new Contract(fewWrappedDTTPairToken1OriginalTokenAddress, JSON.stringify(ERC20.abi), provider).connect(wallet)
 
   return {
     token0,
     token1,
-    token,
+    tokenB,
     tokenC,
     tokenD,
     DTT,
@@ -191,14 +207,17 @@ export async function v2Fixture(provider: Web3Provider, [wallet]: Wallet[]): Pro
     WETHExchangeV1,
     pair,
     WETHPair,
-    wrappedTokenAddress,
-    fewWrappedToken,
     fewWrappedToken0,
     fewWrappedToken1,
+    fewWrappedTokenB,
     fewWrappedDTT,
-    wrappedPair,
-    wrappedWETHPair,
-    wrappedWETHDTTPair,
-    DTTToken1Pair
+    fewWrappedTokenABPair,
+    fewWrappedWETHPair,
+    fewWrappedDTTPair,
+    fewWrappedWETHDTTPair,
+    fewWrappedToken0OriginalToken,
+    fewWrappedToken1OriginalToken,
+    fewWrappedDTTPairDTT,
+    fewWrappedDTTPairOriginalToken1
   }
 }
