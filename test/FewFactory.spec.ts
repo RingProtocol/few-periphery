@@ -49,7 +49,7 @@ describe('FewFactory', () => {
   }
 
   async function createWrappedToken(tokenAddress: string) {
-    const bytecode = FewWrappedToken.bytecode
+    const bytecode = FewWrappedToken.evm.bytecode.object
     const create2Address = getCreate2Address(factory.address, tokenAddress, bytecode)
 
     await expect(factory.createToken(tokenAddress))
@@ -83,6 +83,6 @@ describe('FewFactory', () => {
   it('createWrappedToken:gas', async () => {
     const tx = await factory.createToken(token.address);
     const receipt = await tx.wait();
-    expect(receipt.gasUsed).to.eq(1536854)
+    expect(receipt.gasUsed).to.eq(1646230)
   });
 })
