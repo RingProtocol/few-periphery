@@ -83,6 +83,6 @@ describe('FewFactory', () => {
   it('createWrappedToken:gas', async () => {
     const tx = await factory.createToken(token.address);
     const receipt = await tx.wait();
-    expect(receipt.gasUsed).to.eq(1536854)
+    expect(receipt.gasUsed).to.eq(1273049)
   });
 })
