@@ -89,8 +89,8 @@ contract FewV2Router is IFewV1Router {
         TransferHelper.safeTransferFrom(tokenB, msg.sender, address(this), amountB);
         IERC20(tokenA).approve(wrappedTokenA, amountA);
         IERC20(tokenB).approve(wrappedTokenB, amountB);
-        IFewWrappedToken(wrappedTokenA).wrapTo(amountA.sub(amountA/100), pair);
-        IFewWrappedToken(wrappedTokenB).wrapTo(amountB, pair);
+        IFewWrappedToken(wrappedTokenA).wrapTo(amountA, pair);
+        IFewWrappedToken(wrappedTokenB).wrapTo(amountB.sub(amountB/100), pair);
         liquidity = IUniswapV2Pair(pair).mint(to);
     }
     function addLiquidityETH(
