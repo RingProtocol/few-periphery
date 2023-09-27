@@ -60,10 +60,12 @@ describe('FewWrappedToken', () => {
 
     const expectedLiquidity = expandTo18Decimals(5)
     await expect(fewWrappedToken.wrap(tokenAmount, overrides))
+    .to.emit(token, 'Transfer')
+    .withArgs(wallet.address, fewWrappedToken.address, tokenAmount)
     .to.emit(fewWrappedToken, 'Transfer')
     .withArgs(AddressZero, wallet.address, tokenAmount)
     .to.emit(fewWrappedToken, 'Wrap')
-    .withArgs(wallet.address, tokenAmount)
+    .withArgs(wallet.address, tokenAmount, wallet.address)
 
     expect(await fewWrappedToken.totalSupply()).to.eq(expectedLiquidity)
     expect(await fewWrappedToken.balanceOf(wallet.address)).to.eq(tokenAmount)
@@ -85,13 +87,12 @@ describe('FewWrappedToken', () => {
     .to.emit(token, 'Transfer')
     .withArgs(fewWrappedToken.address, wallet.address, tokenAmount)
     .to.emit(fewWrappedToken, 'Unwrap')
-    .withArgs(wallet.address, tokenAmount)
+    .withArgs(wallet.address, tokenAmount, wallet.address)
 
     expect(await fewWrappedToken.balanceOf(wallet.address)).to.eq(0)
     expect(await fewWrappedToken.totalSupply()).to.eq(0)
     expect(await token.balanceOf(fewWrappedToken.address)).to.eq(tokenAmount)
     const totalSupplyToken = await token.totalSupply()
-    console.log(totalSupplyToken.toString(), 'totalSupplyToken')
     expect(await token.balanceOf(wallet.address)).to.eq(totalSupplyToken.sub(tokenAmount))
   })
 
@@ -110,8 +111,8 @@ describe('FewWrappedToken', () => {
     const tokenAmount = expandTo18Decimals(5)
 
     await expect(fewWrappedToken.connect(other).mint(targetAddress, tokenAmount))
-      .to.emit(fewWrappedToken, 'Minting')
-      .withArgs(targetAddress, other.address, tokenAmount)
+      .to.emit(fewWrappedToken, 'Mint')
+      .withArgs(other.address, tokenAmount, targetAddress)
       .to.emit(fewWrappedToken, 'Transfer')
       .withArgs(AddressZero, targetAddress, tokenAmount)
   })
@@ -145,17 +146,12 @@ describe('FewWrappedToken', () => {
 
     // Burn the tokens
     await expect(fewWrappedToken.connect(other).burn(tokenAmount))
-      .to.emit(fewWrappedToken, 'Burning')
-      .withArgs(targetAddress, other.address, tokenAmount)
+      .to.emit(fewWrappedToken, 'Burn')
+      .withArgs(other.address, tokenAmount, other.address) // Modified the expected arguments here
       .to.emit(fewWrappedToken, 'Transfer')
-      .withArgs(targetAddress, AddressZero, tokenAmount)
+      .withArgs(other.address, AddressZero, tokenAmount)
 
     // Ensure the balance is deducted after burning
     expect(await fewWrappedToken.balanceOf(targetAddress)).to.eq(tokenAmount)
 })
-
-  // async function addLiquidity(tokenAmount: BigNumber) {
-  //   await token.transfer(fewWrappedToken.address, tokenAmount)
-  //   await fewWrappedToken.mint(wallet.address, overrides)
-  // }
 })
