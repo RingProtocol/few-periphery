@@ -93,7 +93,6 @@ describe('FewWrappedToken', () => {
     expect(await fewWrappedToken.totalSupply()).to.eq(0)
     expect(await token.balanceOf(fewWrappedToken.address)).to.eq(tokenAmount)
     const totalSupplyToken = await token.totalSupply()
-    console.log(totalSupplyToken.toString(), 'totalSupplyToken')
     expect(await token.balanceOf(wallet.address)).to.eq(totalSupplyToken.sub(tokenAmount))
   })
 
