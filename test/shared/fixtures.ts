@@ -176,9 +176,6 @@ export async function v2Fixture(provider: Web3Provider, [wallet]: Wallet[]): Pro
   const fewWrappedDTTPairToken0OriginalTokenAddress = await fewWrappedDTTPairToken0.token()
   const fewWrappedDTTPairToken1OriginalTokenAddress = await fewWrappedDTTPairToken1.token()
 
-  // console.log(fewWrappedDTTPairToken0OriginalTokenAddress, DTT.address, 'dtt')
-  // console.log(fewWrappedDTTPairToken1OriginalTokenAddress, tokenB.address, 'fewWrappedDTTPairToken1OriginalTokenAddress')
-  // console.log(fewWrappedDTTPairToken0OriginalTokenAddress, fewWrappedDTTPairToken1OriginalTokenAddress, 'eee')
   const fewWrappedDTTPairOriginalToken1 = new Contract(fewWrappedDTTPairToken0OriginalTokenAddress, JSON.stringify(DeflatingERC20.abi), provider).connect(wallet)
   const fewWrappedDTTPairDTT = new Contract(fewWrappedDTTPairToken1OriginalTokenAddress, JSON.stringify(ERC20.abi), provider).connect(wallet)
 
