@@ -220,11 +220,10 @@ contract FewV1Router is IFewV1Router {
     ) external virtual override ensure(deadline) returns (uint[] memory amounts) {
         amounts = UniswapV2Library.getAmountsOut(factory, amountIn, path);
         require(amounts[amounts.length - 1] >= amountOutMin, 'UniswapV2Router: INSUFFICIENT_OUTPUT_AMOUNT');
-        address srcWrappedToken = path[0];
-        address srcToken = IFewWrappedToken(srcWrappedToken).token();
+        address srcToken = IFewWrappedToken(path[0]).token();
         TransferHelper.safeTransferFrom(srcToken, msg.sender, address(this), amounts[0]);
-        IERC20(srcToken).approve(srcWrappedToken, amounts[0]);
-        IFewWrappedToken(srcWrappedToken).wrapTo(amounts[0], UniswapV2Library.pairFor(factory, path[0], path[1]));
+        IERC20(srcToken).approve(path[0], amounts[0]);
+        IFewWrappedToken(path[0]).wrapTo(amounts[0], UniswapV2Library.pairFor(factory, path[0], path[1]));
         _swap(amounts, path, address(this));
         address dstWrappedToken = path[path.length - 1];
         IFewWrappedToken(dstWrappedToken).unwrapTo(amounts[amounts.length - 1], to);
@@ -238,11 +237,10 @@ contract FewV1Router is IFewV1Router {
     ) external virtual override ensure(deadline) returns (uint[] memory amounts) {
         amounts = UniswapV2Library.getAmountsIn(factory, amountOut, path);
         require(amounts[0] <= amountInMax, 'UniswapV2Router: EXCESSIVE_INPUT_AMOUNT');
-        address srcWrappedToken = path[0];
-        address srcToken = IFewWrappedToken(srcWrappedToken).token();
+        address srcToken = IFewWrappedToken(path[0]).token();
         TransferHelper.safeTransferFrom(srcToken, msg.sender, address(this), amounts[0]);
-        IERC20(srcToken).approve(srcWrappedToken, amounts[0]);
-        IFewWrappedToken(srcWrappedToken).wrapTo(amounts[0], UniswapV2Library.pairFor(factory, path[0], path[1]));
+        IERC20(srcToken).approve(path[0], amounts[0]);
+        IFewWrappedToken(path[0]).wrapTo(amounts[0], UniswapV2Library.pairFor(factory, path[0], path[1]));
         _swap(amounts, path, address(this));
         address dstWrappedToken = path[path.length - 1];
         IFewWrappedToken(dstWrappedToken).unwrapTo(amounts[amounts.length - 1], to);
@@ -275,11 +273,10 @@ contract FewV1Router is IFewV1Router {
         require(path[path.length - 1] == fwWETH, 'UniswapV2Router: INVALID_PATH');
         amounts = UniswapV2Library.getAmountsIn(factory, amountOut, path);
         require(amounts[0] <= amountInMax, 'UniswapV2Router: EXCESSIVE_INPUT_AMOUNT');
-        address srcWrappedToken = path[0];
-        address srcToken = IFewWrappedToken(srcWrappedToken).token();
+        address srcToken = IFewWrappedToken(path[0]).token();
         TransferHelper.safeTransferFrom(srcToken, msg.sender, address(this), amounts[0]);
-        IERC20(srcToken).approve(srcWrappedToken, amounts[0]);
-        IFewWrappedToken(srcWrappedToken).wrapTo(amounts[0], UniswapV2Library.pairFor(factory, path[0], path[1]));
+        IERC20(srcToken).approve(path[0], amounts[0]);
+        IFewWrappedToken(path[0]).wrapTo(amounts[0], UniswapV2Library.pairFor(factory, path[0], path[1]));
         _swap(amounts, path, address(this));
         IFewWrappedToken(fwWETH).unwrap(amounts[amounts.length - 1]);
         IWETH(WETH).withdraw(amounts[amounts.length - 1]);
@@ -295,11 +292,10 @@ contract FewV1Router is IFewV1Router {
         require(path[path.length - 1] == fwWETH, 'UniswapV2Router: INVALID_PATH');
         amounts = UniswapV2Library.getAmountsOut(factory, amountIn, path);
         require(amounts[amounts.length - 1] >= amountOutMin, 'UniswapV2Router: INSUFFICIENT_OUTPUT_AMOUNT');
-        address srcWrappedToken = path[0];
-        address srcToken = IFewWrappedToken(srcWrappedToken).token();
+        address srcToken = IFewWrappedToken(path[0]).token();
         TransferHelper.safeTransferFrom(srcToken, msg.sender, address(this), amounts[0]);
-        IERC20(srcToken).approve(srcWrappedToken, amounts[0]);
-        IFewWrappedToken(srcWrappedToken).wrapTo(amounts[0], UniswapV2Library.pairFor(factory, path[0], path[1]));
+        IERC20(srcToken).approve(path[0], amounts[0]);
+        IFewWrappedToken(path[0]).wrapTo(amounts[0], UniswapV2Library.pairFor(factory, path[0], path[1]));
         _swap(amounts, path, address(this));
         IFewWrappedToken(fwWETH).unwrapTo(amounts[amounts.length - 1], address(this));
         IWETH(WETH).withdraw(amounts[amounts.length - 1]);
