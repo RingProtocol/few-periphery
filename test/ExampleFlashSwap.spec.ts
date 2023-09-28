@@ -64,6 +64,7 @@ describe('ExampleFlashSwap', () => {
     await WETHPair.mint(wallet.address, overrides)
 
     const balanceBefore = await WETHPartner.balanceOf(wallet.address)
+
     // now, execute arbitrage via uniswapV2Call:
     // receive 1 ETH from V2, get as much X from V1 as we can, repay V2 with minimum X, keep the rest!
     const arbitrageAmount = expandTo18Decimals(1)
