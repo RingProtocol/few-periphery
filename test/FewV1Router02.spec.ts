@@ -15,10 +15,10 @@ const overrides = {
 }
 
 enum RouterVersion {
-  fewV2Router = 'fewV2Router'
+  fewV1Router02 = 'fewV1Router02'
 }
 
-describe('FewV2Router{01,02}, FewV1Router', () => {
+describe('FewV1Router02, FewV1Router', () => {
   for (const routerVersion of Object.keys(RouterVersion)) {
     const provider = new MockProvider({
       hardfork: 'istanbul',
@@ -62,7 +62,7 @@ describe('FewV2Router{01,02}, FewV1Router', () => {
       factory = fixture.factoryV2
       fewFactory = fixture.fewFactory
       router = {
-        [RouterVersion.fewV2Router]: fixture.fewV2Router,
+        [RouterVersion.fewV1Router02]: fixture.fewV1Router02,
       }[routerVersion as RouterVersion]
       fewWrappedDTTPair = fixture.fewWrappedDTTPair
     })
