@@ -4,7 +4,13 @@ import { MaxUint256 } from 'ethers/constants'
 import { BigNumber, hexlify, keccak256, toUtf8Bytes } from 'ethers/utils'
 import { ecsign } from 'ethereumjs-util'
 import { solidity, MockProvider, deployContract, createFixtureLoader } from 'ethereum-waffle'
-import { expandTo18Decimals, getApprovalDigest, getDomainSeparator, getFewWrappedTokenApprovalDigest, mineBlock } from './shared/utilities'
+import {
+  expandTo18Decimals,
+  getApprovalDigest,
+  getDomainSeparator,
+  getFewWrappedTokenApprovalDigest,
+  mineBlock
+} from './shared/utilities'
 import { fewWrappedTokenFixture } from './shared/fewFixtures'
 
 chai.use(solidity)
@@ -29,12 +35,12 @@ describe('FewWrappedToken', () => {
     factory = fixture.factory
     fewWrappedToken = fixture.fewWrappedToken
     token = fixture.token
-  });
+  })
 
   it('name, symbol, decimals, totalSupply, balanceOf, DOMAIN_SEPARATOR, PERMIT_TYPEHASH', async () => {
     const name = await fewWrappedToken.name()
     const expectedSymbol = await fewWrappedToken.symbol()
-    const chainId = await provider.getNetwork().then(network => network.chainId);
+    const chainId = await provider.getNetwork().then(network => network.chainId)
 
     expect(name).to.eq('Few Wrapped Test Token')
     expect(expectedSymbol).to.eq('fwTT')
@@ -61,7 +67,7 @@ describe('FewWrappedToken', () => {
     expect(await fewWrappedToken.allowance(wallet.address, other.address)).to.eq(TEST_AMOUNT)
   })
 
-  async function addLiquidity(tokenAmount: BigNumber) {  
+  async function addLiquidity(tokenAmount: BigNumber) {
     await token.approve(fewWrappedToken.address, tokenAmount)
     await fewWrappedToken.wrap(tokenAmount)
   }
@@ -103,7 +109,7 @@ describe('FewWrappedToken', () => {
   })
 
   it('permit', async () => {
-    const network = await provider.getNetwork();
+    const network = await provider.getNetwork()
     const nonce = await fewWrappedToken.nonces(wallet.address)
     const deadline = MaxUint256
     const name = token.name
@@ -112,12 +118,14 @@ describe('FewWrappedToken', () => {
       name,
       { owner: wallet.address, spender: other.address, value: TEST_AMOUNT },
       nonce,
-      deadline,
+      deadline
     )
 
     const { v, r, s } = ecsign(Buffer.from(digest.slice(2), 'hex'), Buffer.from(wallet.privateKey.slice(2), 'hex'))
 
-    await expect(fewWrappedToken.permit(wallet.address, other.address, TEST_AMOUNT, deadline, v, hexlify(r), hexlify(s)))
+    await expect(
+      fewWrappedToken.permit(wallet.address, other.address, TEST_AMOUNT, deadline, v, hexlify(r), hexlify(s))
+    )
       .to.emit(fewWrappedToken, 'Approval')
       .withArgs(wallet.address, other.address, TEST_AMOUNT)
     expect(await fewWrappedToken.allowance(wallet.address, other.address)).to.eq(TEST_AMOUNT)
