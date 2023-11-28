@@ -86,6 +86,8 @@ interface IFewRouter01 {
         external
         payable
         returns (uint[] memory amounts);
+    function wrapETHToFWWETH(address to) external payable returns (uint);
+    function unwrapFWWETHToETH(uint amount, address to) external returns (uint);
 
     function quote(uint amountA, uint reserveA, uint reserveB) external pure returns (uint amountB);
     function getAmountOut(uint amountIn, uint reserveIn, uint reserveOut) external pure returns (uint amountOut);
