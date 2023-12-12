@@ -21,10 +21,10 @@ const overrides = {
 }
 
 enum RouterVersion {
-  FewV1Router = 'FewV1Router'
+  FewRouter = 'FewRouter'
 }
 
-describe('FewV1Router{01,02}, FewV1Router', () => {
+describe('FewRouter{01,02}, FewRouter', () => {
   for (const routerVersion of Object.keys(RouterVersion)) {
     const provider = new MockProvider({
       hardfork: 'istanbul',
@@ -71,7 +71,7 @@ describe('FewV1Router{01,02}, FewV1Router', () => {
       factory = fixture.factoryV2
       fewFactory = fixture.fewFactory
       router = {
-        [RouterVersion.FewV1Router]: fixture.fewRouter
+        [RouterVersion.FewRouter]: fixture.fewRouter
       }[routerVersion as RouterVersion]
       fewETHWrapper = fixture.fewETHWrapper
       pair = fixture.pair
@@ -187,7 +187,7 @@ describe('FewV1Router{01,02}, FewV1Router', () => {
         const receipt = await tx.wait()
         expect(receipt.gasUsed).to.eq(
           {
-            [RouterVersion.FewV1Router]: 6049377
+            [RouterVersion.FewRouter]: 6049377
           }[routerVersion as RouterVersion]
         )
       }).retries(3)
@@ -213,7 +213,7 @@ describe('FewV1Router{01,02}, FewV1Router', () => {
         const receipt = await tx.wait()
         expect(receipt.gasUsed).to.eq(
           {
-            [RouterVersion.FewV1Router]: 352543
+            [RouterVersion.FewRouter]: 352543
           }[routerVersion as RouterVersion]
         )
       }).retries(3)
@@ -480,7 +480,7 @@ describe('FewV1Router{01,02}, FewV1Router', () => {
           const receipt = await tx.wait()
           expect(receipt.gasUsed).to.eq(
             {
-              [RouterVersion.FewV1Router]: 164514
+              [RouterVersion.FewRouter]: 164514
             }[routerVersion as RouterVersion]
           )
         }).retries(3)
@@ -626,7 +626,7 @@ describe('FewV1Router{01,02}, FewV1Router', () => {
           const receipt = await tx.wait()
           expect(receipt.gasUsed).to.eq(
             {
-              [RouterVersion.FewV1Router]: 191702
+              [RouterVersion.FewRouter]: 191702
             }[routerVersion as RouterVersion]
           )
         }).retries(3)
