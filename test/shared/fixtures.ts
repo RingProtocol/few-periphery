@@ -13,7 +13,7 @@ import FewWrappedToken from './contractBuild/FewWrappedToken.json'
 import ERC20 from '../../build/ERC20.json'
 import WETH9 from '../../build/WETH9.json'
 import DeflatingERC20 from '../../build/DeflatingERC20.json'
-import FewV1Router from '../../build/FewV1Router.json'
+import FewRouter from '../../build/FewRouter.json'
 import FewETHWrapper from '../../build/FewETHWrapper.json'
 
 import RouterEventEmitter from '../../build/RouterEventEmitter.json'
@@ -74,7 +74,7 @@ export async function v2Fixture(provider: Web3Provider, [wallet]: Wallet[]): Pro
   const fwWETHAddress = await fewFactory.getWrappedToken(WETH.address)
   const fwWETH = new Contract(fwWETHAddress, JSON.stringify(IFewWrappedToken.abi), provider).connect(wallet)
 
-  const fewRouter = await deployContract(wallet, FewV1Router, [factoryV2.address, WETH.address, fewFactory.address, fwWETH.address], overrides)
+  const fewRouter = await deployContract(wallet, FewRouter, [factoryV2.address, WETH.address, fewFactory.address, fwWETH.address], overrides)
   const fewETHWrapper = await deployContract(wallet, FewETHWrapper, [WETH.address, fwWETH.address], overrides)
 
   // event emitter for testing
@@ -93,7 +93,7 @@ export async function v2Fixture(provider: Web3Provider, [wallet]: Wallet[]): Pro
   const WETHPairAddress = await factoryV2.getPair(WETH.address, WETHPartner.address)
   const WETHPair = new Contract(WETHPairAddress, JSON.stringify(IUniswapV2Pair.abi), provider).connect(wallet)
 
-  // initialize FewV1
+  // initialize Few
   await fewFactory.createToken(tokenA.address)
   await fewFactory.createToken(tokenB.address)
   await fewFactory.createToken(WETHPartner.address)
