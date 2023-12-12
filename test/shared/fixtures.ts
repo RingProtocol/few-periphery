@@ -13,16 +13,9 @@ import FewWrappedToken from './contractBuild/FewWrappedToken.json'
 import ERC20 from '../../build/ERC20.json'
 import WETH9 from '../../build/WETH9.json'
 import DeflatingERC20 from '../../build/DeflatingERC20.json'
-import UniswapV1Exchange from '../../build/UniswapV1Exchange.json'
-import UniswapV1Factory from '../../build/UniswapV1Factory.json'
-import UniswapV2Router01 from '../../build/UniswapV2Router01.json'
-import UniswapV2Migrator from '../../build/UniswapV2Migrator.json'
-import UniswapV2Router02 from '../../build/UniswapV2Router02.json'
 import FewV1Router from '../../build/FewV1Router.json'
-import FewV1Router02 from '../../build/FewV1Router02.json'
 import FewETHWrapper from '../../build/FewETHWrapper.json'
 
-import FewV1RouterFeeOnTransfer from '../../build/FewV1RouterFeeOnTransfer.json'
 import RouterEventEmitter from '../../build/RouterEventEmitter.json'
 
 const overrides = {
@@ -39,20 +32,12 @@ interface V2Fixture {
   WETH: Contract
   WETHPartner: Contract
   fewWrappedWETHPartner: Contract
-  factoryV1: Contract
   factoryV2: Contract
   fewFactory: Contract
-  router01: Contract
-  router02: Contract
   fewRouter: Contract
-  fewV1Router02: Contract
-  fewRouterFeeOnTransfer: Contract
   fewETHWrapper: Contract
   fwWETH: Contract
   routerEventEmitter: Contract
-  router: Contract
-  migrator: Contract
-  WETHExchangeV1: Contract
   pair: Contract
   WETHPair: Contract
   fewWrappedToken0: Contract
@@ -79,41 +64,21 @@ export async function v2Fixture(provider: Web3Provider, [wallet]: Wallet[]): Pro
   const WETH = await deployContract(wallet, WETH9)
   const WETHPartner = await deployContract(wallet, ERC20, [expandTo18Decimals(10000)])
 
-  // deploy V1
-  const factoryV1 = await deployContract(wallet, UniswapV1Factory, [])
-  await factoryV1.initializeFactory((await deployContract(wallet, UniswapV1Exchange, [])).address)
-
   // deploy V2
   const factoryV2 = await deployContract(wallet, UniswapV2Factory, [wallet.address])
 
   //deploy Few Factory
   const fewFactory = await deployContract(wallet, FewFactory, [wallet.address])
 
-  // deploy routers
-  const router01 = await deployContract(wallet, UniswapV2Router01, [factoryV2.address, WETH.address], overrides)
-  const router02 = await deployContract(wallet, UniswapV2Router02, [factoryV2.address, WETH.address], overrides)
-
   await fewFactory.createToken(WETH.address);
   const fwWETHAddress = await fewFactory.getWrappedToken(WETH.address)
   const fwWETH = new Contract(fwWETHAddress, JSON.stringify(IFewWrappedToken.abi), provider).connect(wallet)
 
   const fewRouter = await deployContract(wallet, FewV1Router, [factoryV2.address, WETH.address, fewFactory.address, fwWETH.address], overrides)
-  const fewV1Router02 = await deployContract(wallet, FewV1Router02, [factoryV2.address, WETH.address, fewFactory.address, fwWETH.address], overrides)
-  const fewRouterFeeOnTransfer = await deployContract(wallet, FewV1RouterFeeOnTransfer, [factoryV2.address, WETH.address, fewFactory.address, fwWETH.address], overrides)
   const fewETHWrapper = await deployContract(wallet, FewETHWrapper, [WETH.address, fwWETH.address], overrides)
 
   // event emitter for testing
   const routerEventEmitter = await deployContract(wallet, RouterEventEmitter, [])
-
-  // deploy migrator
-  const migrator = await deployContract(wallet, UniswapV2Migrator, [factoryV1.address, router01.address], overrides)
-
-  // initialize V1
-  await factoryV1.createExchange(WETHPartner.address, overrides)
-  const WETHExchangeV1Address = await factoryV1.getExchange(WETHPartner.address)
-  const WETHExchangeV1 = new Contract(WETHExchangeV1Address, JSON.stringify(UniswapV1Exchange.abi), provider).connect(
-    wallet
-  )
 
   // initialize V2
   await factoryV2.createPair(tokenA.address, tokenB.address)
@@ -192,20 +157,12 @@ export async function v2Fixture(provider: Web3Provider, [wallet]: Wallet[]): Pro
     WETH,
     WETHPartner,
     fewWrappedWETHPartner,
-    factoryV1,
     factoryV2,
     fewFactory,
-    router01,
-    router02,
     fewRouter,
-    fewV1Router02,
-    fewRouterFeeOnTransfer,
     fewETHWrapper,
     fwWETH,
-    router: router02, // the default router, 01 had a minor bug
     routerEventEmitter,
-    migrator,
-    WETHExchangeV1,
     pair,
     WETHPair,
     fewWrappedToken0,
