@@ -4,7 +4,7 @@ import { deployContract } from 'ethereum-waffle'
 
 import { expandTo18Decimals } from './utilities'
 
-import UniswapV2Factory from '@uniswap/v2-core/build/UniswapV2Factory.json'
+import UniswapV2Factory from './contractBuild/UniswapV2Factory.json'
 import FewFactory from './contractBuild/FewFactory.json'
 import IUniswapV2Pair from '@uniswap/v2-core/build/IUniswapV2Pair.json'
 import IFewWrappedToken from './contractBuild/IFewWrappedToken.json'
@@ -63,6 +63,7 @@ export async function v2Fixture(provider: Web3Provider, [wallet]: Wallet[]): Pro
   const DTT = await deployContract(wallet, DeflatingERC20, [expandTo18Decimals(10000)])
   const WETH = await deployContract(wallet, WETH9)
   const WETHPartner = await deployContract(wallet, ERC20, [expandTo18Decimals(10000)])
+  const rewardToken = await deployContract(wallet, ERC20, [expandTo18Decimals(10000)])
 
   // deploy V2
   const factoryV2 = await deployContract(wallet, UniswapV2Factory, [wallet.address])
@@ -73,12 +74,17 @@ export async function v2Fixture(provider: Web3Provider, [wallet]: Wallet[]): Pro
   await fewFactory.createToken(WETH.address);
   const fwWETHAddress = await fewFactory.getWrappedToken(WETH.address)
   const fwWETH = new Contract(fwWETHAddress, JSON.stringify(IFewWrappedToken.abi), provider).connect(wallet)
+  const FWRNG = tokenA
 
-  const fewRouter = await deployContract(wallet, FewRouter, [factoryV2.address, WETH.address, fewFactory.address, fwWETH.address], overrides)
+  const fewRouter = await deployContract(wallet, FewRouter, [factoryV2.address, WETH.address, fewFactory.address, fwWETH.address, FWRNG.address], overrides)
   const fewETHWrapper = await deployContract(wallet, FewETHWrapper, [WETH.address, fwWETH.address], overrides)
 
   // event emitter for testing
   const routerEventEmitter = await deployContract(wallet, RouterEventEmitter, [])
+
+  await factoryV2.setPermittedContract(fewRouter.address, true)
+  await factoryV2.setPermittedContract(wallet.address, true)
+  await fewRouter.setPermittedAccount(wallet.address, true)
 
   // initialize V2
   await factoryV2.createPair(tokenA.address, tokenB.address)
