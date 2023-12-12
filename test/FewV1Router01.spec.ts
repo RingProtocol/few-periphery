@@ -2,10 +2,16 @@ import chai, { expect } from 'chai'
 import { Contract } from 'ethers'
 import { AddressZero, Zero, MaxUint256 } from 'ethers/constants'
 import { BigNumber, bigNumberify } from 'ethers/utils'
-import { solidity, MockProvider, createFixtureLoader } from 'ethereum-waffle'
+import { solidity, MockProvider, createFixtureLoader, loadFixture } from 'ethereum-waffle'
 import { ecsign } from 'ethereumjs-util'
 
-import { expandTo18Decimals, getApprovalDigest, getFewWrappedTokenApprovalDigest, mineBlock, MINIMUM_LIQUIDITY } from './shared/utilities'
+import {
+  expandTo18Decimals,
+  getApprovalDigest,
+  getFewWrappedTokenApprovalDigest,
+  mineBlock,
+  MINIMUM_LIQUIDITY
+} from './shared/utilities'
 import { v2Fixture } from './shared/fixtures'
 
 chai.use(solidity)
@@ -15,7 +21,7 @@ const overrides = {
 }
 
 enum RouterVersion {
-  FewV1Router = 'FewV1Router',
+  FewV1Router = 'FewV1Router'
 }
 
 describe('FewV1Router{01,02}, FewV1Router', () => {
@@ -41,6 +47,7 @@ describe('FewV1Router{01,02}, FewV1Router', () => {
     let factory: Contract
     let fewFactory: Contract
     let router: Contract
+    let fewETHWrapper: Contract
     let pair: Contract
     let wrappedPair: Contract
     let WETHPair: Contract
@@ -64,8 +71,9 @@ describe('FewV1Router{01,02}, FewV1Router', () => {
       factory = fixture.factoryV2
       fewFactory = fixture.fewFactory
       router = {
-        [RouterVersion.FewV1Router]: fixture.fewRouter,
+        [RouterVersion.FewV1Router]: fixture.fewRouter
       }[routerVersion as RouterVersion]
+      fewETHWrapper = fixture.fewETHWrapper
       pair = fixture.pair
       wrappedPair = fixture.fewWrappedTokenABPair
       WETHPair = fixture.WETHPair
@@ -74,7 +82,7 @@ describe('FewV1Router{01,02}, FewV1Router', () => {
       wrappedToken1OriginalToken = fixture.fewWrappedToken1OriginalToken
       routerEventEmitter = fixture.routerEventEmitter
     })
-    
+
     describe(routerVersion, () => {
       it('factory, WETH', async () => {
         expect(await router.factory()).to.eq(factory.address)
@@ -164,7 +172,7 @@ describe('FewV1Router{01,02}, FewV1Router', () => {
 
         await tokenC.approve(router.address, MaxUint256)
         await tokenD.approve(router.address, MaxUint256)
-        
+
         const tx = await router.addLiquidity(
           tokenC.address,
           tokenD.address,
@@ -190,7 +198,7 @@ describe('FewV1Router{01,02}, FewV1Router', () => {
 
         await token0.approve(router.address, MaxUint256)
         await token1.approve(router.address, MaxUint256)
-        
+
         const tx = await router.addLiquidity(
           token0.address,
           token1.address,
@@ -212,8 +220,8 @@ describe('FewV1Router{01,02}, FewV1Router', () => {
 
       async function addLiquidity(wrappedToken0Amount: BigNumber, wrappedToken1Amount: BigNumber) {
         await wrappedToken0OriginalToken.approve(fewWrappedToken0.address, wrappedToken0Amount, overrides)
-        await wrappedToken1OriginalToken.approve(fewWrappedToken1.address, wrappedToken1Amount, overrides);
-        
+        await wrappedToken1OriginalToken.approve(fewWrappedToken1.address, wrappedToken1Amount, overrides)
+
         await fewWrappedToken0.wrap(wrappedToken0Amount, overrides)
         await fewWrappedToken1.wrap(wrappedToken1Amount, overrides)
 
@@ -268,12 +276,11 @@ describe('FewV1Router{01,02}, FewV1Router', () => {
       })
 
       async function addLiquidityWrappedETH(wrappedWETHPartnerAmount: BigNumber, wrappedWETHAmount: BigNumber) {
-
         await WETHPartner.approve(fewWrappedWETHPartner.address, wrappedWETHPartnerAmount, overrides)
 
         await WETH.deposit({ value: wrappedWETHAmount })
         await WETH.approve(fwWETH.address, wrappedWETHAmount, overrides)
-        
+
         await fewWrappedWETHPartner.wrap(wrappedWETHPartnerAmount, overrides)
         await fwWETH.wrap(wrappedWETHAmount, overrides)
 
@@ -323,8 +330,12 @@ describe('FewV1Router{01,02}, FewV1Router', () => {
           .to.emit(wrappedWETHPair, 'Burn')
           .withArgs(
             router.address,
-            wrappedWETHPairToken0 === fewWrappedWETHPartner.address ? wrappedWETHPartnerAmount.sub(500) : wrappedWETHAmount.sub(2000),
-            wrappedWETHPairToken0 === fewWrappedWETHPartner.address ? wrappedWETHAmount.sub(2000) : wrappedWETHPartnerAmount.sub(500),
+            wrappedWETHPairToken0 === fewWrappedWETHPartner.address
+              ? wrappedWETHPartnerAmount.sub(500)
+              : wrappedWETHAmount.sub(2000),
+            wrappedWETHPairToken0 === fewWrappedWETHPartner.address
+              ? wrappedWETHAmount.sub(2000)
+              : wrappedWETHPartnerAmount.sub(500),
             router.address
           )
 
@@ -537,12 +548,18 @@ describe('FewV1Router{01,02}, FewV1Router', () => {
 
         it('happy path', async () => {
           const wrappedWETHPairToken0 = await wrappedWETHPair.token0()
-            await expect(
-              router.swapExactETHForTokens(0, [fwWETH.address, fewWrappedWETHPartner.address], wallet.address, MaxUint256, {
+          await expect(
+            router.swapExactETHForTokens(
+              0,
+              [fwWETH.address, fewWrappedWETHPartner.address],
+              wallet.address,
+              MaxUint256,
+              {
                 ...overrides,
                 value: swapAmount
-              })
+              }
             )
+          )
             .to.emit(fwWETH, 'Transfer')
             .withArgs(AddressZero, wrappedWETHPair.address, swapAmount)
             .to.emit(fewWrappedWETHPartner, 'Transfer')
@@ -679,6 +696,44 @@ describe('FewV1Router{01,02}, FewV1Router', () => {
             .to.emit(routerEventEmitter, 'Amounts')
             .withArgs([expectedSwapAmount, outputAmount])
         })
+      })
+
+      async function addLiquidityETH(ETHAmount: BigNumber) {
+        await WETH.deposit({ value: ETHAmount })
+      }
+
+      it('wrapETHToFWWETH', async () => {
+        const wethAmount = expandTo18Decimals(5)
+        await addLiquidityETH(wethAmount)
+        await expect(fewETHWrapper.wrapETHToFWWETH(wallet.address, { ...overrides, value: wethAmount }))
+          .to.emit(WETH, 'Transfer')
+          .withArgs(fewETHWrapper.address, fwWETH.address, wethAmount)
+          .to.emit(fwWETH, 'Transfer')
+          .withArgs(AddressZero, wallet.address, wethAmount)
+          .to.emit(fwWETH, 'Wrap')
+          .withArgs(fewETHWrapper.address, wethAmount, wallet.address)
+
+        expect(await fwWETH.totalSupply()).to.eq(wethAmount)
+        expect(await fwWETH.balanceOf(wallet.address)).to.eq(wethAmount)
+      })
+
+      it('unwrapFWWETHToETH', async () => {
+        const wethAmount = expandTo18Decimals(5)
+        await addLiquidityETH(wethAmount)
+        await fewETHWrapper.wrapETHToFWWETH(wallet.address, { ...overrides, value: wethAmount })
+        await fwWETH.approve(fewETHWrapper.address, MaxUint256)
+
+        await expect(fewETHWrapper.unwrapFWWETHToETH(wethAmount, wallet.address))
+          .to.emit(fwWETH, 'Transfer')
+          .withArgs(wallet.address, fewETHWrapper.address, wethAmount)
+          .to.emit(WETH, 'Transfer')
+          .withArgs(fwWETH.address, fewETHWrapper.address, wethAmount)
+          .to.emit(fwWETH, 'Unwrap')
+          .withArgs(fewETHWrapper.address, wethAmount, fewETHWrapper.address)
+
+        expect(await fwWETH.balanceOf(wallet.address)).to.eq(0)
+        expect(await fwWETH.totalSupply()).to.eq(0)
+        expect(await fwWETH.balanceOf(fewETHWrapper.address)).to.eq(0)
       })
 
       describe('swapExactTokensForETH', () => {

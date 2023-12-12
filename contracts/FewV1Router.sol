@@ -322,31 +322,6 @@ contract FewV1Router is IFewV1Router {
         if (msg.value > amounts[0]) TransferHelper.safeTransferETH(msg.sender, msg.value - amounts[0]);
     }
 
-    // **** FEW WRAPPED TOKEN ****
-    function wrapETHToFWWETH(address to)
-        external
-        virtual
-        override
-        payable
-        returns (uint)
-    {
-        IWETH(WETH).deposit{value: msg.value}();
-        IERC20(WETH).approve(fwWETH, msg.value);
-        return IFewWrappedToken(fwWETH).wrapTo(msg.value, to);
-    }
-    function unwrapFWWETHToETH(uint amount, address to)
-        external
-        virtual
-        override
-        returns (uint)
-    {
-        TransferHelper.safeTransferFrom(fwWETH, msg.sender, address(this), amount);
-        IFewWrappedToken(fwWETH).unwrapTo(amount, address(this));
-        IWETH(WETH).withdraw(amount);
-        TransferHelper.safeTransferETH(to, amount);
-        return amount;
-    }
-
     // **** LIBRARY FUNCTIONS ****
     function quote(uint amountA, uint reserveA, uint reserveB) public pure virtual override returns (uint amountB) {
         return UniswapV2Library.quote(amountA, reserveA, reserveB);

@@ -43,7 +43,7 @@ describe('UniswapV2Router02', () => {
   beforeEach(async function() {
     const fixture = await loadFixture(v2Fixture)
     token0 = fixture.token0
-    fewWrappedToken0= fixture.fewWrappedToken0
+    fewWrappedToken0 = fixture.fewWrappedToken0
     token1 = fixture.token1
     fewWrappedToken1 = fixture.fewWrappedToken1
     WETH = fixture.WETH
@@ -174,7 +174,7 @@ describe('fee-on-transfer tokens', () => {
     fewRouterFeeOnTransfer = fixture.fewRouterFeeOnTransfer
 
     DTT = await deployContract(wallet, DeflatingERC20, [expandTo18Decimals(10000)])
-    await fewFactory.createToken(DTT.address);
+    await fewFactory.createToken(DTT.address)
     const wrappedDTTAddress = await fewFactory.getWrappedToken(DTT.address)
     wrappedDTT = new Contract(wrappedDTTAddress, JSON.stringify(FewWrappedToken.abi), provider).connect(wallet)
 
@@ -196,7 +196,7 @@ describe('fee-on-transfer tokens', () => {
 
     await DTT.approve(wrappedDTT.address, DTTAmount, overrides)
     await WETH.approve(fwWETH.address, fwWETHAmount, overrides)
-    
+
     await wrappedDTT.wrap(DTTAmount, overrides)
     await fwWETH.wrap(fwWETHAmount, overrides)
 
@@ -275,7 +275,6 @@ describe('fee-on-transfer tokens', () => {
 
     // WETH -> DTT
     it('WETH -> DTT', async () => {
-      
       await WETH.deposit({ value: amountIn }) // mint WETH
       await WETH.approve(fewRouterFeeOnTransfer.address, MaxUint256)
 
@@ -352,7 +351,7 @@ describe('fee-on-transfer tokens: reloaded', () => {
   let fewWrappedDTT2: Contract
   let router: Contract
   let fewRouterFeeOnTransfer: Contract
-  let fewFactory:Contract
+  let fewFactory: Contract
   beforeEach(async function() {
     const fixture = await loadFixture(v2Fixture)
 
@@ -408,7 +407,7 @@ describe('fee-on-transfer tokens: reloaded', () => {
       .div(99)
     const DTT2Amount = expandTo18Decimals(5)
     const amountIn = expandTo18Decimals(1)
-    
+
     beforeEach(async () => {
       await addLiquidity(DTTAmount, DTT2Amount)
     })
