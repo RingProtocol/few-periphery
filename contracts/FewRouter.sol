@@ -1,6 +1,6 @@
 pragma solidity =0.6.6;
 
-import '@uniswap/v2-core/contracts/interfaces/IUniswapV2Factory.sol';
+import './interfaces/IUniswapV2Factory.sol';
 import '@uniswap/lib/contracts/libraries/TransferHelper.sol';
 
 import './interfaces/IFewRouter.sol';
@@ -10,6 +10,7 @@ import './libraries/UniswapV2Library.sol';
 import './libraries/SafeMath.sol';
 import './interfaces/IERC20.sol';
 import './interfaces/IWETH.sol';
+import './interfaces/IIncentive.sol';
 
 contract FewRouter is IFewRouter {
     using SafeMath for uint;
@@ -18,17 +19,22 @@ contract FewRouter is IFewRouter {
     address public immutable override WETH;
     address public immutable override fewFactory;
     address public immutable override fwWETH;
+    address public immutable override FWRNG;
+
+    mapping(address => bool) public override getPermittedAccount;
+    address public override incentiveContract;
 
     modifier ensure(uint deadline) {
         require(deadline >= block.timestamp, 'UniswapV2Router: EXPIRED');
         _;
     }
 
-    constructor(address _factory, address _WETH, address _fewFactory, address _fwWETH) public {
+    constructor(address _factory, address _WETH, address _fewFactory, address _fwWETH, address _FWRNG) public {
         factory = _factory;
         WETH = _WETH;
         fewFactory = _fewFactory;
         fwWETH = _fwWETH;
+        FWRNG = _FWRNG;
     }
 
     receive() external payable {
@@ -44,6 +50,8 @@ contract FewRouter is IFewRouter {
         uint amountAMin,
         uint amountBMin
     ) internal virtual returns (uint amountA, uint amountB) {
+        require(getPermittedAccount[msg.sender], 'UniswapV2Router: FORBIDDEN');
+
         // create the pair if it doesn't exist yet
         if (IUniswapV2Factory(factory).getPair(tokenA, tokenB) == address(0)) {
             IUniswapV2Factory(factory).createPair(tokenA, tokenB);
@@ -136,6 +144,8 @@ contract FewRouter is IFewRouter {
         address to,
         uint deadline
     ) public virtual override ensure(deadline) returns (uint amountA, uint amountB) {
+        require(getPermittedAccount[msg.sender], 'UniswapV2Router: FORBIDDEN');
+
         address pair = UniswapV2Library.pairFor(factory, tokenA, tokenB);
         IUniswapV2Pair(pair).transferFrom(msg.sender, pair, liquidity); // send liquidity to pair
         (uint amount0, uint amount1) = IUniswapV2Pair(pair).burn(address(this));
@@ -204,6 +214,13 @@ contract FewRouter is IFewRouter {
             (address input, address output) = (path[i], path[i + 1]);
             (address token0,) = UniswapV2Library.sortTokens(input, output);
             uint amountOut = amounts[i + 1];
+            if (incentiveContract != address(0)) {
+                if (input == FWRNG) {
+                    IIncentive(incentiveContract).incentivize(msg.sender, _to, msg.sender,  amounts[i]);
+                } else if (output == FWRNG) {
+                    IIncentive(incentiveContract).incentivize(msg.sender, _to, msg.sender, amountOut);
+                }
+            }
             (uint amount0Out, uint amount1Out) = input == token0 ? (uint(0), amountOut) : (amountOut, uint(0));
             address to = i < path.length - 2 ? UniswapV2Library.pairFor(factory, output, path[i + 2]) : _to;
             IUniswapV2Pair(UniswapV2Library.pairFor(factory, input, output)).swap(
@@ -320,6 +337,18 @@ contract FewRouter is IFewRouter {
         IFewWrappedToken(dstWrappedToken).unwrapTo(amounts[amounts.length - 1], to);
         // refund dust eth, if any
         if (msg.value > amounts[0]) TransferHelper.safeTransferETH(msg.sender, msg.value - amounts[0]);
+    }
+
+    function setPermittedAccount(address permittedAccount, bool enabled) external override {
+        require(msg.sender == IUniswapV2Factory(factory).feeToSetter(), 'UniswapV2Router: FORBIDDEN');
+
+        getPermittedAccount[permittedAccount] = enabled;
+    }
+
+    function setIncentiveContract(address incentive) external override {
+        require(msg.sender == IUniswapV2Factory(factory).feeToSetter(), 'UniswapV2Router: FORBIDDEN');
+
+        incentiveContract = incentive;
     }
 
     // **** LIBRARY FUNCTIONS ****
