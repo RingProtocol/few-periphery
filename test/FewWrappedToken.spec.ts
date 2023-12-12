@@ -43,11 +43,13 @@ describe('FewWrappedToken', () => {
     await factory.createToken(token.address)
 
     fewWrappedTokenAddress = await factory.getWrappedToken(token.address)
-    fewWrappedToken = new Contract(fewWrappedTokenAddress, JSON.stringify(FewWrappedToken.abi), provider).connect(wallet)
+    fewWrappedToken = new Contract(fewWrappedTokenAddress, JSON.stringify(FewWrappedToken.abi), provider).connect(
+      wallet
+    )
   })
 
   async function wrap(tokenAmount: BigNumber) {
-    await token.approve(fewWrappedToken.address, tokenAmount, overrides);
+    await token.approve(fewWrappedToken.address, tokenAmount, overrides)
     await fewWrappedToken.wrap(tokenAmount, overrides)
   }
 
@@ -56,16 +58,16 @@ describe('FewWrappedToken', () => {
     await token.transfer(fewWrappedToken.address, tokenAmount, overrides)
     await mineBlock(provider, (await provider.getBlock('latest')).timestamp + 1)
 
-    await token.approve(fewWrappedToken.address, tokenAmount, overrides);
+    await token.approve(fewWrappedToken.address, tokenAmount, overrides)
 
     const expectedLiquidity = expandTo18Decimals(5)
     await expect(fewWrappedToken.wrap(tokenAmount, overrides))
-    .to.emit(token, 'Transfer')
-    .withArgs(wallet.address, fewWrappedToken.address, tokenAmount)
-    .to.emit(fewWrappedToken, 'Transfer')
-    .withArgs(AddressZero, wallet.address, tokenAmount)
-    .to.emit(fewWrappedToken, 'Wrap')
-    .withArgs(wallet.address, tokenAmount, wallet.address)
+      .to.emit(token, 'Transfer')
+      .withArgs(wallet.address, fewWrappedToken.address, tokenAmount)
+      .to.emit(fewWrappedToken, 'Transfer')
+      .withArgs(AddressZero, wallet.address, tokenAmount)
+      .to.emit(fewWrappedToken, 'Wrap')
+      .withArgs(wallet.address, tokenAmount, wallet.address)
 
     expect(await fewWrappedToken.totalSupply()).to.eq(expectedLiquidity)
     expect(await fewWrappedToken.balanceOf(wallet.address)).to.eq(tokenAmount)
@@ -74,7 +76,7 @@ describe('FewWrappedToken', () => {
   })
 
   async function unwrap(tokenAmount: BigNumber) {
-    await fewWrappedToken.approve(fewWrappedToken.address, tokenAmount, overrides);
+    await fewWrappedToken.approve(fewWrappedToken.address, tokenAmount, overrides)
     await fewWrappedToken.unwrap(tokenAmount, overrides)
   }
 
@@ -82,12 +84,12 @@ describe('FewWrappedToken', () => {
     const tokenAmount = expandTo18Decimals(5)
 
     await expect(fewWrappedToken.unwrap(tokenAmount, overrides))
-    .to.emit(fewWrappedToken, 'Transfer')
-    .withArgs(wallet.address, AddressZero, tokenAmount)
-    .to.emit(token, 'Transfer')
-    .withArgs(fewWrappedToken.address, wallet.address, tokenAmount)
-    .to.emit(fewWrappedToken, 'Unwrap')
-    .withArgs(wallet.address, tokenAmount, wallet.address)
+      .to.emit(fewWrappedToken, 'Transfer')
+      .withArgs(wallet.address, AddressZero, tokenAmount)
+      .to.emit(token, 'Transfer')
+      .withArgs(fewWrappedToken.address, wallet.address, tokenAmount)
+      .to.emit(fewWrappedToken, 'Unwrap')
+      .withArgs(wallet.address, tokenAmount, wallet.address)
 
     expect(await fewWrappedToken.balanceOf(wallet.address)).to.eq(0)
     expect(await fewWrappedToken.totalSupply()).to.eq(0)
@@ -100,13 +102,13 @@ describe('FewWrappedToken', () => {
     const targetAddress = other.address
 
     // Ensure the target address is not a minter initially
-    expect(await core.isMinter(targetAddress)).to.equal(false);
+    expect(await core.isMinter(targetAddress)).to.equal(false)
 
     // Grant minter role to the target address
-    await core.connect(wallet).grantMinter(targetAddress);
+    await core.connect(wallet).grantMinter(targetAddress)
 
     // Verify that the target address is now a minter
-    expect(await core.isMinter(targetAddress)).to.equal(true);
+    expect(await core.isMinter(targetAddress)).to.equal(true)
 
     const tokenAmount = expandTo18Decimals(5)
 
@@ -133,7 +135,7 @@ describe('FewWrappedToken', () => {
     expect(await core.isBurner(targetAddress)).to.equal(false)
 
     // Grant burner role to the target address
-    await core.grantBurner(targetAddress);
+    await core.grantBurner(targetAddress)
 
     // Verify that the target address is now a burner
     expect(await core.isBurner(targetAddress)).to.equal(true)
@@ -153,5 +155,5 @@ describe('FewWrappedToken', () => {
 
     // Ensure the balance is deducted after burning
     expect(await fewWrappedToken.balanceOf(targetAddress)).to.eq(tokenAmount)
-})
+  })
 })
