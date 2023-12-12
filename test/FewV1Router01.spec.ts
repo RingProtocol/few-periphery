@@ -47,6 +47,7 @@ describe('FewV1Router{01,02}, FewV1Router', () => {
     let factory: Contract
     let fewFactory: Contract
     let router: Contract
+    let fewETHWrapper: Contract
     let pair: Contract
     let wrappedPair: Contract
     let WETHPair: Contract
@@ -72,6 +73,7 @@ describe('FewV1Router{01,02}, FewV1Router', () => {
       router = {
         [RouterVersion.FewV1Router]: fixture.fewRouter
       }[routerVersion as RouterVersion]
+      fewETHWrapper = fixture.fewETHWrapper
       pair = fixture.pair
       wrappedPair = fixture.fewWrappedTokenABPair
       WETHPair = fixture.WETHPair
@@ -185,7 +187,7 @@ describe('FewV1Router{01,02}, FewV1Router', () => {
         const receipt = await tx.wait()
         expect(receipt.gasUsed).to.eq(
           {
-            [RouterVersion.FewV1Router]: 6049929
+            [RouterVersion.FewV1Router]: 6049377
           }[routerVersion as RouterVersion]
         )
       }).retries(3)
@@ -211,7 +213,7 @@ describe('FewV1Router{01,02}, FewV1Router', () => {
         const receipt = await tx.wait()
         expect(receipt.gasUsed).to.eq(
           {
-            [RouterVersion.FewV1Router]: 353011
+            [RouterVersion.FewV1Router]: 352543
           }[routerVersion as RouterVersion]
         )
       }).retries(3)
@@ -478,7 +480,7 @@ describe('FewV1Router{01,02}, FewV1Router', () => {
           const receipt = await tx.wait()
           expect(receipt.gasUsed).to.eq(
             {
-              [RouterVersion.FewV1Router]: 165139
+              [RouterVersion.FewV1Router]: 164514
             }[routerVersion as RouterVersion]
           )
         }).retries(3)
@@ -624,7 +626,7 @@ describe('FewV1Router{01,02}, FewV1Router', () => {
           const receipt = await tx.wait()
           expect(receipt.gasUsed).to.eq(
             {
-              [RouterVersion.FewV1Router]: 192293
+              [RouterVersion.FewV1Router]: 191702
             }[routerVersion as RouterVersion]
           )
         }).retries(3)
@@ -703,13 +705,13 @@ describe('FewV1Router{01,02}, FewV1Router', () => {
       it('wrapETHToFWWETH', async () => {
         const wethAmount = expandTo18Decimals(5)
         await addLiquidityETH(wethAmount)
-        await expect(router.wrapETHToFWWETH(wallet.address, { ...overrides, value: wethAmount }))
+        await expect(fewETHWrapper.wrapETHToFWWETH(wallet.address, { ...overrides, value: wethAmount }))
           .to.emit(WETH, 'Transfer')
-          .withArgs(router.address, fwWETH.address, wethAmount)
+          .withArgs(fewETHWrapper.address, fwWETH.address, wethAmount)
           .to.emit(fwWETH, 'Transfer')
           .withArgs(AddressZero, wallet.address, wethAmount)
           .to.emit(fwWETH, 'Wrap')
-          .withArgs(router.address, wethAmount, wallet.address)
+          .withArgs(fewETHWrapper.address, wethAmount, wallet.address)
 
         expect(await fwWETH.totalSupply()).to.eq(wethAmount)
         expect(await fwWETH.balanceOf(wallet.address)).to.eq(wethAmount)
@@ -718,20 +720,20 @@ describe('FewV1Router{01,02}, FewV1Router', () => {
       it('unwrapFWWETHToETH', async () => {
         const wethAmount = expandTo18Decimals(5)
         await addLiquidityETH(wethAmount)
-        await router.wrapETHToFWWETH(wallet.address, { ...overrides, value: wethAmount })
-        await fwWETH.approve(router.address, MaxUint256)
+        await fewETHWrapper.wrapETHToFWWETH(wallet.address, { ...overrides, value: wethAmount })
+        await fwWETH.approve(fewETHWrapper.address, MaxUint256)
 
-        await expect(router.unwrapFWWETHToETH(wethAmount, wallet.address))
+        await expect(fewETHWrapper.unwrapFWWETHToETH(wethAmount, wallet.address))
           .to.emit(fwWETH, 'Transfer')
-          .withArgs(wallet.address, router.address, wethAmount)
+          .withArgs(wallet.address, fewETHWrapper.address, wethAmount)
           .to.emit(WETH, 'Transfer')
-          .withArgs(fwWETH.address, router.address, wethAmount)
+          .withArgs(fwWETH.address, fewETHWrapper.address, wethAmount)
           .to.emit(fwWETH, 'Unwrap')
-          .withArgs(router.address, wethAmount, router.address)
+          .withArgs(fewETHWrapper.address, wethAmount, fewETHWrapper.address)
 
         expect(await fwWETH.balanceOf(wallet.address)).to.eq(0)
         expect(await fwWETH.totalSupply()).to.eq(0)
-        expect(await fwWETH.balanceOf(router.address)).to.eq(0)
+        expect(await fwWETH.balanceOf(fewETHWrapper.address)).to.eq(0)
       })
 
       describe('swapExactTokensForETH', () => {

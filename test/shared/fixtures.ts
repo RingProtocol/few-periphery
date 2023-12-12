@@ -20,6 +20,7 @@ import UniswapV2Migrator from '../../build/UniswapV2Migrator.json'
 import UniswapV2Router02 from '../../build/UniswapV2Router02.json'
 import FewV1Router from '../../build/FewV1Router.json'
 import FewV1Router02 from '../../build/FewV1Router02.json'
+import FewETHWrapper from '../../build/FewETHWrapper.json'
 
 import FewV1RouterFeeOnTransfer from '../../build/FewV1RouterFeeOnTransfer.json'
 import RouterEventEmitter from '../../build/RouterEventEmitter.json'
@@ -46,6 +47,7 @@ interface V2Fixture {
   fewRouter: Contract
   fewV1Router02: Contract
   fewRouterFeeOnTransfer: Contract
+  fewETHWrapper: Contract
   fwWETH: Contract
   routerEventEmitter: Contract
   router: Contract
@@ -98,6 +100,7 @@ export async function v2Fixture(provider: Web3Provider, [wallet]: Wallet[]): Pro
   const fewRouter = await deployContract(wallet, FewV1Router, [factoryV2.address, WETH.address, fewFactory.address, fwWETH.address], overrides)
   const fewV1Router02 = await deployContract(wallet, FewV1Router02, [factoryV2.address, WETH.address, fewFactory.address, fwWETH.address], overrides)
   const fewRouterFeeOnTransfer = await deployContract(wallet, FewV1RouterFeeOnTransfer, [factoryV2.address, WETH.address, fewFactory.address, fwWETH.address], overrides)
+  const fewETHWrapper = await deployContract(wallet, FewETHWrapper, [WETH.address, fwWETH.address], overrides)
 
   // event emitter for testing
   const routerEventEmitter = await deployContract(wallet, RouterEventEmitter, [])
@@ -197,6 +200,7 @@ export async function v2Fixture(provider: Web3Provider, [wallet]: Wallet[]): Pro
     fewRouter,
     fewV1Router02,
     fewRouterFeeOnTransfer,
+    fewETHWrapper,
     fwWETH,
     router: router02, // the default router, 01 had a minor bug
     routerEventEmitter,
