@@ -37,14 +37,14 @@ describe('FewFactory', () => {
     expect(await factory.allWrappedTokensLength()).to.eq(0)
   })
 
-  async function testToken(tokenAddress: string): Promise<{ name?: string, symbol?: string, error?: any }> {
-    const tokenContract = new Contract(tokenAddress, ERC20.abi, wallet);
+  async function testToken(tokenAddress: string): Promise<{ name?: string; symbol?: string; error?: any }> {
+    const tokenContract = new Contract(tokenAddress, ERC20.abi, wallet)
     try {
-        const name = await tokenContract.name();
-        const symbol = await tokenContract.symbol();
-        return { name, symbol };
+      const name = await tokenContract.name()
+      const symbol = await tokenContract.symbol()
+      return { name, symbol }
     } catch (error) {
-        return { error };
+      return { error }
     }
   }
 
@@ -54,35 +54,34 @@ describe('FewFactory', () => {
 
     await expect(factory.createToken(tokenAddress))
       .to.emit(factory, 'WrappedTokenCreated')
-    .withArgs(tokenAddress, create2Address, bigNumberify(1))
+      .withArgs(tokenAddress, create2Address, bigNumberify(1))
 
     await expect(factory.createToken(TEST_ADDRESSES[0])).to.be.reverted // token not been deployed
     expect(await factory.getWrappedToken(tokenAddress)).to.eq(create2Address)
     expect(await factory.allWrappedTokensLength()).to.eq(1)
-
   }
 
   describe('testToken Verification', async () => {
     it('should fail for non-deployed contract', async () => {
       const error = await testToken(TEST_ADDRESSES[0])
-      expect(error.error).to.be.an('Error');
+      expect(error.error).to.be.an('Error')
       expect(error.error.reason).to.include('contract not deployed')
     })
 
     it('should success for deployed contract', async () => {
-      const result = await testToken(token.address);
-      expect(result.name).to.equal('Test Token');
-      expect(result.symbol).to.equal('TT');
+      const result = await testToken(token.address)
+      expect(result.name).to.equal('Test Token')
+      expect(result.symbol).to.equal('TT')
     })
   })
 
   it('createWrappedToken', async () => {
-    await createWrappedToken(token.address);
-  });
+    await createWrappedToken(token.address)
+  })
 
   it('createWrappedToken:gas', async () => {
-    const tx = await factory.createToken(token.address);
-    const receipt = await tx.wait();
+    const tx = await factory.createToken(token.address)
+    const receipt = await tx.wait()
     expect(receipt.gasUsed).to.eq(1646230)
-  });
+  })
 })
