@@ -74,9 +74,8 @@ export async function v2Fixture(provider: Web3Provider, [wallet]: Wallet[]): Pro
   await fewFactory.createToken(WETH.address);
   const fwWETHAddress = await fewFactory.getWrappedToken(WETH.address)
   const fwWETH = new Contract(fwWETHAddress, JSON.stringify(IFewWrappedToken.abi), provider).connect(wallet)
-  const FWRNG = tokenA
 
-  const fewRouter = await deployContract(wallet, FewRouter, [factoryV2.address, WETH.address, fewFactory.address, fwWETH.address, FWRNG.address], overrides)
+  const fewRouter = await deployContract(wallet, FewRouter, [factoryV2.address, WETH.address, fewFactory.address, fwWETH.address], overrides)
   const fewETHWrapper = await deployContract(wallet, FewETHWrapper, [WETH.address, fwWETH.address], overrides)
 
   // event emitter for testing

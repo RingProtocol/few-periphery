@@ -10,7 +10,6 @@ import './libraries/UniswapV2Library.sol';
 import './libraries/SafeMath.sol';
 import './interfaces/IERC20.sol';
 import './interfaces/IWETH.sol';
-import './interfaces/IIncentive.sol';
 
 contract FewRouter is IFewRouter {
     using SafeMath for uint;
@@ -19,22 +18,19 @@ contract FewRouter is IFewRouter {
     address public immutable override WETH;
     address public immutable override fewFactory;
     address public immutable override fwWETH;
-    address public immutable override FWRNG;
 
     mapping(address => bool) public override getPermittedAccount;
-    address public override incentiveContract;
 
     modifier ensure(uint deadline) {
         require(deadline >= block.timestamp, 'UniswapV2Router: EXPIRED');
         _;
     }
 
-    constructor(address _factory, address _WETH, address _fewFactory, address _fwWETH, address _FWRNG) public {
+    constructor(address _factory, address _WETH, address _fewFactory, address _fwWETH) public {
         factory = _factory;
         WETH = _WETH;
         fewFactory = _fewFactory;
         fwWETH = _fwWETH;
-        FWRNG = _FWRNG;
     }
 
     receive() external payable {
@@ -214,13 +210,6 @@ contract FewRouter is IFewRouter {
             (address input, address output) = (path[i], path[i + 1]);
             (address token0,) = UniswapV2Library.sortTokens(input, output);
             uint amountOut = amounts[i + 1];
-            if (incentiveContract != address(0)) {
-                if (input == FWRNG) {
-                    IIncentive(incentiveContract).incentivize(msg.sender, _to, msg.sender,  amounts[i]);
-                } else if (output == FWRNG) {
-                    IIncentive(incentiveContract).incentivize(msg.sender, _to, msg.sender, amountOut);
-                }
-            }
             (uint amount0Out, uint amount1Out) = input == token0 ? (uint(0), amountOut) : (amountOut, uint(0));
             address to = i < path.length - 2 ? UniswapV2Library.pairFor(factory, output, path[i + 2]) : _to;
             IUniswapV2Pair(UniswapV2Library.pairFor(factory, input, output)).swap(
@@ -343,56 +332,5 @@ contract FewRouter is IFewRouter {
         require(msg.sender == IUniswapV2Factory(factory).feeToSetter(), 'UniswapV2Router: FORBIDDEN');
 
         getPermittedAccount[permittedAccount] = enabled;
-    }
-
-    function setIncentiveContract(address incentive) external override {
-        require(msg.sender == IUniswapV2Factory(factory).feeToSetter(), 'UniswapV2Router: FORBIDDEN');
-
-        incentiveContract = incentive;
-    }
-
-    // **** LIBRARY FUNCTIONS ****
-    function quote(uint amountA, uint reserveA, uint reserveB) public pure virtual override returns (uint amountB) {
-        return UniswapV2Library.quote(amountA, reserveA, reserveB);
-    }
-
-    function getAmountOut(uint amountIn, uint reserveIn, uint reserveOut)
-        public
-        pure
-        virtual
-        override
-        returns (uint amountOut)
-    {
-        return UniswapV2Library.getAmountOut(amountIn, reserveIn, reserveOut);
-    }
-
-    function getAmountIn(uint amountOut, uint reserveIn, uint reserveOut)
-        public
-        pure
-        virtual
-        override
-        returns (uint amountIn)
-    {
-        return UniswapV2Library.getAmountIn(amountOut, reserveIn, reserveOut);
-    }
-
-    function getAmountsOut(uint amountIn, address[] memory path)
-        public
-        view
-        virtual
-        override
-        returns (uint[] memory amounts)
-    {
-        return UniswapV2Library.getAmountsOut(factory, amountIn, path);
-    }
-
-    function getAmountsIn(uint amountOut, address[] memory path)
-        public
-        view
-        virtual
-        override
-        returns (uint[] memory amounts)
-    {
-        return UniswapV2Library.getAmountsIn(factory, amountOut, path);
     }
 }
