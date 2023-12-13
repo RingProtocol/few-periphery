@@ -187,7 +187,7 @@ describe('FewRouter{01,02}, FewRouter', () => {
         const receipt = await tx.wait()
         expect(receipt.gasUsed).to.eq(
           {
-            [RouterVersion.FewRouter]: 6049377
+            [RouterVersion.FewRouter]: 6159824
           }[routerVersion as RouterVersion]
         )
       }).retries(3)
@@ -213,7 +213,7 @@ describe('FewRouter{01,02}, FewRouter', () => {
         const receipt = await tx.wait()
         expect(receipt.gasUsed).to.eq(
           {
-            [RouterVersion.FewRouter]: 352583
+            [RouterVersion.FewRouter]: 357012
           }[routerVersion as RouterVersion]
         )
       }).retries(3)
@@ -626,7 +626,7 @@ describe('FewRouter{01,02}, FewRouter', () => {
           const receipt = await tx.wait()
           expect(receipt.gasUsed).to.eq(
             {
-              [RouterVersion.FewRouter]: 191772
+              [RouterVersion.FewRouter]: 191624
             }[routerVersion as RouterVersion]
           )
         }).retries(3)
