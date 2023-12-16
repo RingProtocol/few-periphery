@@ -1,9 +1,9 @@
 pragma solidity =0.6.6;
 
-import './interfaces/IUniswapV2Factory.sol';
+import '@uniswap/v2-core/contracts/interfaces/IUniswapV2Factory.sol';
 import '@uniswap/lib/contracts/libraries/TransferHelper.sol';
 
-import './interfaces/IFewRouter.sol';
+import './interfaces/IRingRouter.sol';
 import './interfaces/IFewFactory.sol';
 import './interfaces/IFewWrappedToken.sol';
 import './libraries/UniswapV2Library.sol';
@@ -11,7 +11,7 @@ import './libraries/SafeMath.sol';
 import './interfaces/IERC20.sol';
 import './interfaces/IWETH.sol';
 
-contract FewRouter is IFewRouter {
+contract FewRouter is IRingRouter {
     using SafeMath for uint;
 
     address public immutable override factory;

@@ -4,7 +4,7 @@ import { deployContract } from 'ethereum-waffle'
 
 import { expandTo18Decimals } from './utilities'
 
-import UniswapV2Factory from './contractBuild/UniswapV2Factory.json'
+import RingV2Factory from './contractBuild/RingV2Factory.json'
 import FewFactory from './contractBuild/FewFactory.json'
 import IUniswapV2Pair from '@uniswap/v2-core/build/IUniswapV2Pair.json'
 import IFewWrappedToken from './contractBuild/IFewWrappedToken.json'
@@ -63,10 +63,9 @@ export async function v2Fixture(provider: Web3Provider, [wallet]: Wallet[]): Pro
   const DTT = await deployContract(wallet, DeflatingERC20, [expandTo18Decimals(10000)])
   const WETH = await deployContract(wallet, WETH9)
   const WETHPartner = await deployContract(wallet, ERC20, [expandTo18Decimals(10000)])
-  const rewardToken = await deployContract(wallet, ERC20, [expandTo18Decimals(10000)])
 
   // deploy V2
-  const factoryV2 = await deployContract(wallet, UniswapV2Factory, [wallet.address])
+  const ringFactoryV2 = await deployContract(wallet, RingV2Factory, [wallet.address])
 
   //deploy Few Factory
   const fewFactory = await deployContract(wallet, FewFactory, [wallet.address])
@@ -75,27 +74,27 @@ export async function v2Fixture(provider: Web3Provider, [wallet]: Wallet[]): Pro
   const fwWETHAddress = await fewFactory.getWrappedToken(WETH.address)
   const fwWETH = new Contract(fwWETHAddress, JSON.stringify(IFewWrappedToken.abi), provider).connect(wallet)
 
-  const fewRouter = await deployContract(wallet, FewRouter, [factoryV2.address, WETH.address, fewFactory.address, fwWETH.address], overrides)
+  const fewRouter = await deployContract(wallet, FewRouter, [ringFactoryV2.address, WETH.address, fewFactory.address, fwWETH.address], overrides)
   const fewETHWrapper = await deployContract(wallet, FewETHWrapper, [WETH.address, fwWETH.address], overrides)
 
   // event emitter for testing
   const routerEventEmitter = await deployContract(wallet, RouterEventEmitter, [])
 
-  await factoryV2.setPermittedContract(fewRouter.address, true)
-  await factoryV2.setPermittedContract(wallet.address, true)
+  await ringFactoryV2.setPermittedContract(fewRouter.address, true)
+  await ringFactoryV2.setPermittedContract(wallet.address, true)
   await fewRouter.setPermittedAccount(wallet.address, true)
 
   // initialize V2
-  await factoryV2.createPair(tokenA.address, tokenB.address)
-  const pairAddress = await factoryV2.getPair(tokenA.address, tokenB.address)
+  await ringFactoryV2.createPair(tokenA.address, tokenB.address)
+  const pairAddress = await ringFactoryV2.getPair(tokenA.address, tokenB.address)
   const pair = new Contract(pairAddress, JSON.stringify(IUniswapV2Pair.abi), provider).connect(wallet)
 
   const token0Address = await pair.token0()
   const token0 = tokenA.address === token0Address ? tokenA : tokenB
   const token1 = tokenA.address === token0Address ? tokenB : tokenA
 
-  await factoryV2.createPair(WETH.address, WETHPartner.address)
-  const WETHPairAddress = await factoryV2.getPair(WETH.address, WETHPartner.address)
+  await ringFactoryV2.createPair(WETH.address, WETHPartner.address)
+  const WETHPairAddress = await ringFactoryV2.getPair(WETH.address, WETHPartner.address)
   const WETHPair = new Contract(WETHPairAddress, JSON.stringify(IUniswapV2Pair.abi), provider).connect(wallet)
 
   // initialize Few
@@ -115,20 +114,20 @@ export async function v2Fixture(provider: Web3Provider, [wallet]: Wallet[]): Pro
   const fewWrappedDTT = new Contract(wrappedDTTAddress, JSON.stringify(FewWrappedToken.abi), provider).connect(wallet)
 
   // crate fewWrapped pairs
-  await factoryV2.createPair(fewWrappedTokenA.address, fewWrappedTokenB.address)
-  const fewWrappedTokenABPairAddress = await factoryV2.getPair(fewWrappedTokenA.address, fewWrappedTokenB.address)
+  await ringFactoryV2.createPair(fewWrappedTokenA.address, fewWrappedTokenB.address)
+  const fewWrappedTokenABPairAddress = await ringFactoryV2.getPair(fewWrappedTokenA.address, fewWrappedTokenB.address)
   const fewWrappedTokenABPair = new Contract(fewWrappedTokenABPairAddress, JSON.stringify(IUniswapV2Pair.abi), provider).connect(wallet)
 
-  await factoryV2.createPair(fwWETH.address, fewWrappedWETHPartner.address)
-  const fewWrappedWETHPairAddress = await factoryV2.getPair(fwWETH.address, fewWrappedWETHPartner.address)
+  await ringFactoryV2.createPair(fwWETH.address, fewWrappedWETHPartner.address)
+  const fewWrappedWETHPairAddress = await ringFactoryV2.getPair(fwWETH.address, fewWrappedWETHPartner.address)
   const fewWrappedWETHPair = new Contract(fewWrappedWETHPairAddress, JSON.stringify(IUniswapV2Pair.abi), provider).connect(wallet)
 
-  await factoryV2.createPair(fewWrappedDTT.address, fewWrappedTokenB.address)
-  const fewWrappedDTTPairAddress = await factoryV2.getPair(fewWrappedDTT.address, fewWrappedTokenB.address)
+  await ringFactoryV2.createPair(fewWrappedDTT.address, fewWrappedTokenB.address)
+  const fewWrappedDTTPairAddress = await ringFactoryV2.getPair(fewWrappedDTT.address, fewWrappedTokenB.address)
   const fewWrappedDTTPair = new Contract(fewWrappedDTTPairAddress, JSON.stringify(IUniswapV2Pair.abi), provider).connect(wallet)
 
-  await factoryV2.createPair(fwWETH.address, fewWrappedDTT.address)
-  const fewWrappedWETHDTTPairAddress = await factoryV2.getPair(fwWETH.address, fewWrappedDTT.address)
+  await ringFactoryV2.createPair(fwWETH.address, fewWrappedDTT.address)
+  const fewWrappedWETHDTTPairAddress = await ringFactoryV2.getPair(fwWETH.address, fewWrappedDTT.address)
   const fewWrappedWETHDTTPair = new Contract(fewWrappedWETHDTTPairAddress, JSON.stringify(IUniswapV2Pair.abi), provider).connect(wallet)
 
   // sort wrappedTokens
@@ -162,7 +161,7 @@ export async function v2Fixture(provider: Web3Provider, [wallet]: Wallet[]): Pro
     WETH,
     WETHPartner,
     fewWrappedWETHPartner,
-    factoryV2,
+    factoryV2: ringFactoryV2,
     fewFactory,
     fewRouter,
     fewETHWrapper,
