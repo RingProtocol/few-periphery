@@ -3,7 +3,7 @@ pragma solidity =0.6.6;
 import '@uniswap/v2-core/contracts/interfaces/IUniswapV2Factory.sol';
 import '@uniswap/lib/contracts/libraries/TransferHelper.sol';
 
-import './interfaces/IRingRouter.sol';
+import './interfaces/IFewRouter.sol';
 import './interfaces/IFewFactory.sol';
 import './interfaces/IFewWrappedToken.sol';
 import './libraries/UniswapV2Library.sol';
@@ -11,15 +11,13 @@ import './libraries/SafeMath.sol';
 import './interfaces/IERC20.sol';
 import './interfaces/IWETH.sol';
 
-contract FewRouter is IRingRouter {
+contract FewRouter is IFewRouter {
     using SafeMath for uint;
 
     address public immutable override factory;
     address public immutable override WETH;
     address public immutable override fewFactory;
     address public immutable override fwWETH;
-
-    mapping(address => bool) public override getPermittedAccount;
 
     modifier ensure(uint deadline) {
         require(deadline >= block.timestamp, 'UniswapV2Router: EXPIRED');
@@ -46,8 +44,6 @@ contract FewRouter is IRingRouter {
         uint amountAMin,
         uint amountBMin
     ) internal virtual returns (uint amountA, uint amountB) {
-        require(getPermittedAccount[msg.sender], 'UniswapV2Router: FORBIDDEN');
-
         // create the pair if it doesn't exist yet
         if (IUniswapV2Factory(factory).getPair(tokenA, tokenB) == address(0)) {
             IUniswapV2Factory(factory).createPair(tokenA, tokenB);
@@ -140,8 +136,6 @@ contract FewRouter is IRingRouter {
         address to,
         uint deadline
     ) public virtual override ensure(deadline) returns (uint amountA, uint amountB) {
-        require(getPermittedAccount[msg.sender], 'UniswapV2Router: FORBIDDEN');
-
         address pair = UniswapV2Library.pairFor(factory, tokenA, tokenB);
         IUniswapV2Pair(pair).transferFrom(msg.sender, pair, liquidity); // send liquidity to pair
         (uint amount0, uint amount1) = IUniswapV2Pair(pair).burn(address(this));
@@ -328,9 +322,48 @@ contract FewRouter is IRingRouter {
         if (msg.value > amounts[0]) TransferHelper.safeTransferETH(msg.sender, msg.value - amounts[0]);
     }
 
-    function setPermittedAccount(address permittedAccount, bool enabled) external override {
-        require(msg.sender == IUniswapV2Factory(factory).feeToSetter(), 'UniswapV2Router: FORBIDDEN');
+    // **** LIBRARY FUNCTIONS ****
+    function quote(uint amountA, uint reserveA, uint reserveB) public pure virtual override returns (uint amountB) {
+        return UniswapV2Library.quote(amountA, reserveA, reserveB);
+    }
 
-        getPermittedAccount[permittedAccount] = enabled;
+    function getAmountOut(uint amountIn, uint reserveIn, uint reserveOut)
+        public
+        pure
+        virtual
+        override
+        returns (uint amountOut)
+    {
+        return UniswapV2Library.getAmountOut(amountIn, reserveIn, reserveOut);
+    }
+
+    function getAmountIn(uint amountOut, uint reserveIn, uint reserveOut)
+        public
+        pure
+        virtual
+        override
+        returns (uint amountIn)
+    {
+        return UniswapV2Library.getAmountIn(amountOut, reserveIn, reserveOut);
+    }
+
+    function getAmountsOut(uint amountIn, address[] memory path)
+        public
+        view
+        virtual
+        override
+        returns (uint[] memory amounts)
+    {
+        return UniswapV2Library.getAmountsOut(factory, amountIn, path);
+    }
+
+    function getAmountsIn(uint amountOut, address[] memory path)
+        public
+        view
+        virtual
+        override
+        returns (uint[] memory amounts)
+    {
+        return UniswapV2Library.getAmountsIn(factory, amountOut, path);
     }
 }
