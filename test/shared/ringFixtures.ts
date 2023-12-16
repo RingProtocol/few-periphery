@@ -80,8 +80,8 @@ export async function v2Fixture(provider: Web3Provider, [wallet]: Wallet[]): Pro
   // event emitter for testing
   const routerEventEmitter = await deployContract(wallet, RouterEventEmitter, [])
 
-  await ringFactoryV2.setPermittedContract(ringRouter.address, true)
-  await ringFactoryV2.setPermittedContract(wallet.address, true)
+  await ringFactoryV2.setPermittedAccount(ringRouter.address, true)
+  await ringFactoryV2.setPermittedAccount(wallet.address, true)
   await ringRouter.setPermittedAccount(wallet.address, true)
 
   // initialize V2

@@ -71,7 +71,7 @@ describe('RingRouter', () => {
       factory = fixture.factoryV2
       fewFactory = fixture.fewFactory
       router = {
-        [RouterVersion.ringRouter]: fixture.ringRouter
+        [RouterVersion.RingRouter]: fixture.ringRouter
       }[routerVersion as RouterVersion]
       fewETHWrapper = fixture.fewETHWrapper
       pair = fixture.pair
@@ -187,7 +187,7 @@ describe('RingRouter', () => {
         const receipt = await tx.wait()
         expect(receipt.gasUsed).to.eq(
           {
-            [RouterVersion.RingRouter]: 6159824
+            [RouterVersion.RingRouter]: 6159846
           }[routerVersion as RouterVersion]
         )
       }).retries(3)
@@ -213,7 +213,7 @@ describe('RingRouter', () => {
         const receipt = await tx.wait()
         expect(receipt.gasUsed).to.eq(
           {
-            [RouterVersion.RingRouter]: 357012
+            [RouterVersion.RingRouter]: 357097
           }[routerVersion as RouterVersion]
         )
       }).retries(3)
@@ -626,7 +626,7 @@ describe('RingRouter', () => {
           const receipt = await tx.wait()
           expect(receipt.gasUsed).to.eq(
             {
-              [RouterVersion.RingRouter]: 191624
+              [RouterVersion.RingRouter]: 191706
             }[routerVersion as RouterVersion]
           )
         }).retries(3)

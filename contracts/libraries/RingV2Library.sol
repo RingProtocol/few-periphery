@@ -21,7 +21,7 @@ library RingV2Library {
                 hex'ff',
                 factory,
                 keccak256(abi.encodePacked(token0, token1)),
-                hex'446ef7ae472f812ef631237910935be39adadd6f30233687721cece92402fe2b' // init code hash
+                hex'7bb8e653f17062363b5ba1ef7e234a8df49ac9c5b8efa399b9771220727e9730' // init code hash
             ))));
     }
 
