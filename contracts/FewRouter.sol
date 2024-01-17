@@ -10,6 +10,7 @@ import './libraries/UniswapV2Library.sol';
 import './libraries/SafeMath.sol';
 import './interfaces/IERC20.sol';
 import './interfaces/IWETH.sol';
+import './interfaces/IBlast.sol';
 
 contract FewRouter is IFewRouter {
     using SafeMath for uint;
@@ -365,5 +366,11 @@ contract FewRouter is IFewRouter {
         returns (uint[] memory amounts)
     {
         return UniswapV2Library.getAmountsIn(factory, amountOut, path);
+    }
+
+    function claimMaxGas(address recipient) external override returns (uint) {
+        require(msg.sender == IUniswapV2Factory(factory).feeToSetter(), 'UniswapV2Router: FORBIDDEN');
+
+        return IBlast(0x4300000000000000000000000000000000000002).claimMaxGas(address(0), recipient);
     }
 }
