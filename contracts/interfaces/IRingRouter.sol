@@ -8,4 +8,6 @@ interface IRingRouter is IUniswapV2Router01Base {
 
     function getPermittedAccount(address permittedAccount) external view returns (bool enabled);
     function setPermittedAccount(address permittedAccount, bool enabled) external;
+
+    function claimMaxGas(address recipient) external returns (uint);
 }
